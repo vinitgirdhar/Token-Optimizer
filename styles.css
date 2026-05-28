@@ -1,0 +1,193 @@
+/* Claude Token Optimizer — Injected HUD Overlay */
+
+:root {
+  --ato-bg:       #FFFFFF;
+  --ato-border:   rgba(0, 0, 0, .07);
+  --ato-green:    #10b981;
+  --ato-green-bg: rgba(16, 185, 129, .10);
+  --ato-green-bd: rgba(16, 185, 129, .22);
+  --ato-t1:       #111827;
+  --ato-t2:       #374151;
+  --ato-t3:       #6B7280;
+  --ato-ease:     cubic-bezier(.4, 0, .2, 1);
+}
+
+.ato-hud-overlay {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 320px;
+  background: var(--ato-bg);
+  border: 1px solid var(--ato-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .10), 0 1px 4px rgba(0, 0, 0, .06);
+  border-radius: 14px;
+  padding: 14px 16px;
+  z-index: 9999999999;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ato-t1);
+  overflow: hidden;
+  animation: ato-slide-in .32s var(--ato-ease);
+  transition: opacity .28s var(--ato-ease), transform .28s var(--ato-ease);
+}
+
+.ato-hud-overlay.ato-slide-out {
+  opacity: 0;
+  transform: translateY(-10px) scale(.97);
+}
+
+@keyframes ato-slide-in {
+  from { opacity: 0; transform: translateY(-10px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0)     scale(1);   }
+}
+
+/* ── HEADER ───────────────────────────────────────────────── */
+.ato-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--ato-border);
+}
+
+/* Icon box — matches the popup brand-glow card */
+.ato-logo-container {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--ato-green-bg);
+  border: 1px solid var(--ato-green-bd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  overflow: visible;
+}
+
+.ato-logo-glow {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ato-green);
+  position: relative;
+  z-index: 2;
+}
+
+.ato-logo-ring {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--ato-green);
+  border-radius: 50%;
+  animation: ato-pulse 1.6s ease-out infinite;
+  z-index: 1;
+}
+
+@keyframes ato-pulse {
+  0%   { transform: scale(1);   opacity: .55; }
+  100% { transform: scale(3.2); opacity: 0;   }
+}
+
+.ato-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ato-t1);
+  margin: 0;
+  letter-spacing: -.02em;
+}
+
+/* ── BODY ─────────────────────────────────────────────────── */
+.ato-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ato-file-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ato-file-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ato-t1);
+  max-width: 210px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ato-file-badge {
+  background: #F3F4F6;
+  border: 1px solid var(--ato-border);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ato-t3);
+  white-space: nowrap;
+}
+
+/* ── PROGRESS BAR ─────────────────────────────────────────── */
+.ato-progress-track {
+  width: 100%;
+  height: 5px;
+  background: #ECEDEF;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ato-progress-bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--ato-green), #059669);
+  border-radius: 10px;
+  transition: width .35s var(--ato-ease);
+}
+
+.ato-progress-shine {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, .45) 50%, transparent 100%);
+  animation: ato-shine 1.6s infinite linear;
+}
+
+@keyframes ato-shine {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%);  }
+}
+
+/* ── STATUS + SAVINGS BADGE ───────────────────────────────── */
+.ato-hud-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10.5px;
+  color: var(--ato-t3);
+  font-weight: 500;
+}
+
+.ato-saving-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--ato-green-bg);
+  border: 1px solid var(--ato-green-bd);
+  color: var(--ato-green);
+  font-weight: 700;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  animation: ato-pop .28s cubic-bezier(.175, .885, .32, 1.2);
+}
+
+@keyframes ato-pop {
+  from { transform: scale(.85); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.ato-saving-badge svg { width: 10px; height: 10px; fill: currentColor; }

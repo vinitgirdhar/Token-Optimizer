@@ -1,0 +1,58 @@
+{
+  "manifest_version": 3,
+  "name": "Claude Token Optimizer",
+  "version": "1.0.0",
+  "description": "Converts PDF, DOCX, XLSX, and CSV uploads to optimized Markdown locally — reducing AI token usage by up to 70%. 100% private, no data leaves your browser.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "image.png",
+      "48": "image.png",
+      "128": "image.png"
+    }
+  },
+  "icons": {
+    "16": "image.png",
+    "48": "image.png",
+    "128": "image.png"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://*.perplexity.ai/*"
+      ],
+      "css": ["styles.css"],
+      "js": [
+        "lib/pdf.js",
+        "lib/pdf.worker.js",
+        "lib/mammoth.browser.min.js",
+        "lib/xlsx.full.min.js",
+        "converter.js",
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "lib/pdf.worker.js"
+      ],
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://claude.ai/*",
+        "https://gemini.google.com/*",
+        "https://*.perplexity.ai/*"
+      ]
+    }
+  ]
+}

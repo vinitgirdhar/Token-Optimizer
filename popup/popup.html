@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Token Optimizer Dashboard</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-glow"><img src="../image.png" alt=""></div>
+        <div class="brand-text">
+          <h1>Claude Token Optimizer</h1>
+          <p>Local · Private · Fast</p>
+        </div>
+      </div>
+      <div class="status-indicator">
+        <div class="pulse-dot-container">
+          <span class="pulse-dot"></span>
+          <span class="pulse-ring"></span>
+        </div>
+        <span class="status-text">Active Protection</span>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="app-nav">
+      <div class="nav-indicator"></div>
+      <button class="nav-btn active" data-tab="dashboard">
+        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H5v-2h12v2zm0-4H5V7h12v2zm0 8H5v-2h12v2z"/></svg>
+        Overview
+      </button>
+      <button class="nav-btn" data-tab="playground">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+        Playground
+      </button>
+      <button class="nav-btn" data-tab="settings">
+        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        Settings
+      </button>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="app-main">
+      <!-- Tab: Dashboard -->
+      <section id="tab-dashboard" class="tab-content active">
+        <!-- Stats Card -->
+        <div class="stat-card stat-card-full">
+          <div class="stat-icon purple">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          </div>
+          <div class="stat-info">
+            <h3 id="stat-files">0</h3>
+            <p>Files Optimized</p>
+          </div>
+        </div>
+
+        <!-- Savings Visualization Chart -->
+        <div class="visual-panel">
+          <div class="panel-header">
+            <h3>Optimized Compression</h3>
+            <span class="badge" id="stat-ratio">0% Saved</span>
+          </div>
+          <div class="ratio-bar-container">
+            <div class="ratio-labels">
+              <span>Original Size</span>
+              <span>Optimized Markdown</span>
+            </div>
+            <div class="ratio-bar-track">
+              <div class="ratio-bar-fill" id="ratio-bar-fill" style="width: 0%"></div>
+            </div>
+            <div class="ratio-metrics">
+              <span id="metric-original">0 KB</span>
+              <span id="metric-optimized">0 KB</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Context Alert -->
+        <div class="context-alert">
+          <div class="alert-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+          </div>
+          <div class="alert-text">
+            <h4>No Upload Friction</h4>
+            <p>Simply upload your PDFs, DOCX, or Excel sheets directly in Claude/ChatGPT. Conversion is fully automatic.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Playground -->
+      <section id="tab-playground" class="tab-content">
+        <div class="playground-layout">
+          <!-- Dropzone -->
+          <div class="dropzone" id="play-dropzone">
+            <div class="dropzone-content">
+              <svg class="drop-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              <h3>Drag & Drop File Here</h3>
+              <p>Supports .pdf, .docx, .xlsx, .csv, .md</p>
+              <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.xlsx,.csv,.md">
+              <button class="btn secondary" id="play-select-btn">Select File</button>
+              <p id="play-error-msg" class="play-error-msg" style="display: none;"></p>
+            </div>
+          </div>
+
+          <!-- Loading View -->
+          <div class="playground-loader" id="play-loader" style="display: none;">
+            <div class="spinner"></div>
+            <p id="play-loader-text">Parsing and optimizing structure...</p>
+          </div>
+
+          <!-- Result View -->
+          <div class="playground-result" id="play-result" style="display: none;">
+            <div class="result-header">
+              <div class="result-meta">
+                <span class="file-name" id="play-res-filename">document.pdf</span>
+                <span class="stats-badge" id="play-res-stats">3.2 KB (Saved ~75%)</span>
+              </div>
+              <div class="result-actions">
+                <button class="btn icon-btn" id="play-copy-btn" title="Copy to Clipboard">
+                  <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  Copy
+                </button>
+                <button class="btn icon-btn" id="play-reset-btn">
+                  Reset
+                </button>
+              </div>
+            </div>
+            <div class="result-body">
+              <textarea readonly id="play-markdown-output"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tab: Settings -->
+      <section id="tab-settings" class="tab-content">
+        <div class="settings-list">
+          <!-- Toggle Extensions -->
+          <div class="settings-group">
+            <h3>Active Target File Types</h3>
+            <p class="group-desc">Choose which documents are intercepted and converted to Markdown.</p>
+            
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>PDF Documents (.pdf)</h4>
+                <p>High-fidelity text & coordinate reconstructor</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-pdf" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Word Documents (.docx)</h4>
+                <p>HTML semantic structural mapping</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-docx" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Excel Sheets (.xlsx / .xls)</h4>
+                <p>Clean token-efficient Markdown tables</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-xlsx" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>CSV Files (.csv)</h4>
+                <p>Whitespace and layout compressed tables</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-csv" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Custom Instructions/Template -->
+          <div class="settings-group">
+            <h3>Prepended Context Template</h3>
+            <p class="group-desc">Add a custom instruction to prepend to your Markdown document when uploaded. Useful for giving immediate instructions to Claude or ChatGPT.</p>
+            
+            <div class="text-area-container">
+              <textarea id="setting-template" placeholder="Example: Here is the optimized markdown version of my file. Please analyze the data and wait for my questions..."></textarea>
+            </div>
+          </div>
+
+          <!-- Reset Stats -->
+          <div class="settings-group action-group">
+            <div class="toggle-label">
+              <h4>Clear Dashboard History</h4>
+              <p>Resets file counts, token logs, and cumulative cost savings.</p>
+            </div>
+            <button class="btn danger" id="setting-reset-stats">Reset Logs</button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <span>100% Local Browser Engine</span>
+      <span>Privacy Secured</span>
+    </footer>
+  </div>
+
+  <!-- Dependencies (paths are relative to the popup page context) -->
+  <script src="../lib/pdf.js"></script>
+  <script src="../lib/mammoth.browser.min.js"></script>
+  <script src="../lib/xlsx.full.min.js"></script>
+  <script src="../converter.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
