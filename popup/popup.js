@@ -21,15 +21,18 @@ document.addEventListener('DOMContentLoaded', async function () {
   // Stats Elements
   const statFiles = document.getElementById('stat-files');
   const statRatio = document.getElementById('stat-ratio');
-  const ratioBarFill = document.getElementById('ratio-bar-fill');
   const metricOriginal = document.getElementById('metric-original');
   const metricOptimized = document.getElementById('metric-optimized');
+  const metricSaved = document.getElementById('metric-saved');
 
   // Settings Elements
   const togglePdf = document.getElementById('setting-pdf');
   const toggleDocx = document.getElementById('setting-docx');
   const toggleXlsx = document.getElementById('setting-xlsx');
   const toggleCsv = document.getElementById('setting-csv');
+  const togglePptx = document.getElementById('setting-pptx');
+  const toggleOcr = document.getElementById('setting-ocr');
+  const toggleDarkMode = document.getElementById('setting-darkmode');
   const templateInput = document.getElementById('setting-template');
   const resetStatsBtn = document.getElementById('setting-reset-stats');
 
@@ -80,49 +83,135 @@ document.addEventListener('DOMContentLoaded', async function () {
   /* ==========================================
      Storage & Settings Layer
      ========================================== */
+  const defaultSettings = {
+    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
+    ocrEnabled: false,
+    darkModeEnabled: false,
+    stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
+    customTemplate: ''
+  };
+
+  function loadFromLocalStorageFallback(resolve) {
+    try {
+      const stored = localStorage.getItem('ato_settings');
+      const items = stored ? JSON.parse(stored) : defaultSettings;
+      const merged = {
+        extensions: { ...defaultSettings.extensions, ...items.extensions },
+        ocrEnabled: items.ocrEnabled !== undefined ? items.ocrEnabled : defaultSettings.ocrEnabled,
+        darkModeEnabled: items.darkModeEnabled !== undefined ? items.darkModeEnabled : defaultSettings.darkModeEnabled,
+        stats: { ...defaultSettings.stats, ...items.stats },
+        customTemplate: items.customTemplate !== undefined ? items.customTemplate : defaultSettings.customTemplate
+      };
+      applyLoadedSettings(merged);
+    } catch (err) {
+      console.warn('Failed to load settings from localStorage:', err);
+      applyLoadedSettings(defaultSettings);
+    }
+    resolve();
+  }
+
   async function loadSettings() {
     await new Promise((resolve) => {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.get({
-          extensions: { pdf: true, docx: true, xlsx: true, csv: true },
-          stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
-          customTemplate: ''
-        }, (items) => {
-          togglePdf.checked = items.extensions.pdf;
-          toggleDocx.checked = items.extensions.docx;
-          toggleXlsx.checked = items.extensions.xlsx;
-          toggleCsv.checked = items.extensions.csv;
-          templateInput.value = items.customTemplate || '';
-          statistics = items.stats;
-          updateDashboardUI();
-          resolve();
-        });
+        try {
+          chrome.storage.local.get(defaultSettings, (items) => {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+              loadFromLocalStorageFallback(resolve);
+            } else {
+              applyLoadedSettings(items || defaultSettings);
+              resolve();
+            }
+          });
+        } catch (_) {
+          loadFromLocalStorageFallback(resolve);
+        }
       } else {
-        updateDashboardUI();
-        resolve();
+        loadFromLocalStorageFallback(resolve);
       }
     });
   }
 
+  function applyLoadedSettings(items) {
+    togglePdf.checked = items.extensions.pdf;
+    toggleDocx.checked = items.extensions.docx;
+    toggleXlsx.checked = items.extensions.xlsx;
+    toggleCsv.checked = items.extensions.csv;
+    togglePptx.checked = items.extensions.pptx;
+    toggleOcr.checked = items.ocrEnabled;
+    toggleDarkMode.checked = items.darkModeEnabled || false;
+
+    if (toggleDarkMode.checked) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+
+    templateInput.value = items.customTemplate || '';
+    statistics = items.stats;
+    updateDashboardUI();
+  }
+
+  function saveToLocalStorageFallback(settings) {
+    try {
+      const stored = localStorage.getItem('ato_settings');
+      const items = stored ? JSON.parse(stored) : {};
+      const merged = { ...items, ...settings };
+      localStorage.setItem('ato_settings', JSON.stringify(merged));
+    } catch (err) {
+      console.warn('Failed to save settings to localStorage:', err);
+    }
+  }
+
   function saveSettings() {
+    const settings = {
+      extensions: {
+        pdf: togglePdf.checked,
+        docx: toggleDocx.checked,
+        xlsx: toggleXlsx.checked,
+        csv: toggleCsv.checked,
+        pptx: togglePptx.checked
+      },
+      ocrEnabled: toggleOcr.checked,
+      darkModeEnabled: toggleDarkMode.checked,
+      customTemplate: templateInput.value
+    };
+
+    if (toggleDarkMode.checked) {
+      document.body.classList.add('dark-theme');
+    } else {
+      document.body.classList.remove('dark-theme');
+    }
+
     if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-      chrome.storage.local.set({
-        extensions: {
-          pdf: togglePdf.checked,
-          docx: toggleDocx.checked,
-          xlsx: toggleXlsx.checked,
-          csv: toggleCsv.checked
-        },
-        customTemplate: templateInput.value
-      });
+      try {
+        chrome.storage.local.set(settings, () => {
+          if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+            saveToLocalStorageFallback(settings);
+          }
+        });
+      } catch (_) {
+        saveToLocalStorageFallback(settings);
+      }
+    } else {
+      saveToLocalStorageFallback(settings);
     }
   }
 
   // Trigger Save on any change
-  [togglePdf, toggleDocx, toggleXlsx, toggleCsv].forEach(el => {
+  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleOcr, toggleDarkMode].forEach(el => {
     el.addEventListener('change', saveSettings);
   });
   templateInput.addEventListener('input', saveSettings);
+
+  function resetStatsLocalStorageFallback() {
+    try {
+      const stored = localStorage.getItem('ato_settings');
+      const items = stored ? JSON.parse(stored) : {};
+      items.stats = statistics;
+      localStorage.setItem('ato_settings', JSON.stringify(items));
+    } catch (_) {}
+    updateDashboardUI();
+  }
 
   // Clear Logs Button
   resetStatsBtn.addEventListener('click', () => {
@@ -135,11 +224,19 @@ document.addEventListener('DOMContentLoaded', async function () {
       };
 
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({ stats: statistics }, () => {
-          updateDashboardUI();
-        });
+        try {
+          chrome.storage.local.set({ stats: statistics }, () => {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+              resetStatsLocalStorageFallback();
+            } else {
+              updateDashboardUI();
+            }
+          });
+        } catch (_) {
+          resetStatsLocalStorageFallback();
+        }
       } else {
-        updateDashboardUI();
+        resetStatsLocalStorageFallback();
       }
     }
   });
@@ -156,15 +253,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     metricOriginal.textContent = origText;
     metricOptimized.textContent = optText;
 
-    // Ratio computation
+    // Ratio & Saved computation
     let savingsRatio = 0;
+    const savedBytes = Math.max(0, statistics.totalOriginalBytes - statistics.totalOptimizedBytes);
+    const savedText = TokenOptimizerConverter.formatBytes(savedBytes);
+    metricSaved.textContent = savedText;
+
     if (statistics.totalOriginalBytes > 0) {
-      const savings = statistics.totalOriginalBytes - statistics.totalOptimizedBytes;
-      savingsRatio = Math.max(0, Math.round((savings / statistics.totalOriginalBytes) * 100));
+      savingsRatio = Math.max(0, Math.round((savedBytes / statistics.totalOriginalBytes) * 100));
     }
     
     statRatio.textContent = `${savingsRatio}% Saved`;
-    ratioBarFill.style.width = `${savingsRatio}%`;
   }
 
   /* ==========================================
@@ -226,8 +325,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const name = file.name;
     const ext = name.split('.').pop().toLowerCase();
     
-    if (!['pdf', 'docx', 'xlsx', 'csv', 'md'].includes(ext)) {
-      showPlayError(`Unsupported type ".${ext}". Use PDF, DOCX, XLSX, CSV, or MD.`);
+    if (!['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md'].includes(ext)) {
+      showPlayError(`Unsupported type ".${ext}". Use PDF, DOCX, PPTX, XLSX, CSV, or MD.`);
       return;
     }
 
@@ -250,6 +349,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         });
       } else if (ext === 'docx') {
         md = await TokenOptimizerConverter.convertDOCX(arrayBuffer);
+      } else if (ext === 'pptx') {
+        md = await TokenOptimizerConverter.convertPPTX(arrayBuffer, (curr, tot) => {
+          playLoaderText.textContent = `Extracting slide ${curr} of ${tot}...`;
+        });
       } else if (ext === 'xlsx' || ext === 'csv') {
         md = await TokenOptimizerConverter.convertExcel(arrayBuffer);
       } else if (ext === 'md') {
@@ -293,8 +396,27 @@ Format: ${ext.toUpperCase()} to Markdown
       statistics.totalOptimizedBytes += new Blob([finalContent]).size;
       statistics.totalTokensSaved += tokensSaved;
       updateDashboardUI();
+      const savePlaygroundStatsFallback = () => {
+        try {
+          const stored = localStorage.getItem('ato_settings');
+          const items = stored ? JSON.parse(stored) : {};
+          items.stats = statistics;
+          localStorage.setItem('ato_settings', JSON.stringify(items));
+        } catch (_) {}
+      };
+
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({ stats: statistics });
+        try {
+          chrome.storage.local.set({ stats: statistics }, () => {
+            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.lastError) {
+              savePlaygroundStatsFallback();
+            }
+          });
+        } catch (_) {
+          savePlaygroundStatsFallback();
+        }
+      } else {
+        savePlaygroundStatsFallback();
       }
 
       // Swap views
@@ -318,7 +440,7 @@ Format: ${ext.toUpperCase()} to Markdown
         <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
         Copied!
       `;
-      playCopyBtn.style.color = 'var(--emerald)';
+      playCopyBtn.style.color = 'var(--theme-blue)';
       
       setTimeout(() => {
         playCopyBtn.innerHTML = origText;

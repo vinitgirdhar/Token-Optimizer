@@ -17,13 +17,6 @@
           <p>Local · Private · Fast</p>
         </div>
       </div>
-      <div class="status-indicator">
-        <div class="pulse-dot-container">
-          <span class="pulse-dot"></span>
-          <span class="pulse-ring"></span>
-        </div>
-        <span class="status-text">Active Protection</span>
-      </div>
     </header>
 
     <!-- Navigation Tabs -->
@@ -64,18 +57,24 @@
             <h3>Optimized Compression</h3>
             <span class="badge" id="stat-ratio">0% Saved</span>
           </div>
-          <div class="ratio-bar-container">
-            <div class="ratio-labels">
-              <span>Original Size</span>
-              <span>Optimized Markdown</span>
+          
+          <div class="compression-stats-grid">
+            <div class="comp-stat-item">
+              <span class="comp-label">Original Files</span>
+              <span class="comp-value" id="metric-original">0 Bytes</span>
             </div>
-            <div class="ratio-bar-track">
-              <div class="ratio-bar-fill" id="ratio-bar-fill" style="width: 0%"></div>
+            <div class="comp-stat-arrow">
+              <svg viewBox="0 0 24 24"><path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/></svg>
             </div>
-            <div class="ratio-metrics">
-              <span id="metric-original">0 KB</span>
-              <span id="metric-optimized">0 KB</span>
+            <div class="comp-stat-item">
+              <span class="comp-value-badge">Markdown</span>
+              <span class="comp-value" id="metric-optimized">0 Bytes</span>
             </div>
+          </div>
+
+          <div class="savings-callout">
+            <span class="savings-label">Total Data Saved</span>
+            <span class="savings-value" id="metric-saved">0 Bytes</span>
           </div>
         </div>
 
@@ -99,8 +98,8 @@
             <div class="dropzone-content">
               <svg class="drop-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
               <h3>Drag & Drop File Here</h3>
-              <p>Supports .pdf, .docx, .xlsx, .csv, .md</p>
-              <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.xlsx,.csv,.md">
+              <p>Supports .pdf, .docx, .pptx, .xlsx, .csv, .md</p>
+              <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.pptx,.xlsx,.csv,.md">
               <button class="btn secondary" id="play-select-btn">Select File</button>
               <p id="play-error-msg" class="play-error-msg" style="display: none;"></p>
             </div>
@@ -187,12 +186,58 @@
                 <span class="slider"></span>
               </label>
             </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>PowerPoint Slides (.pptx)</h4>
+                <p>Slide titles, bullets, tables &amp; speaker notes</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-pptx" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- OCR Settings -->
+          <div class="settings-group">
+            <h3>Advanced Features</h3>
+            <p class="group-desc">Optional processing capabilities that enhance extraction quality for specific document types.</p>
+            
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>OCR for Scanned PDFs</h4>
+                <p>Extract text from image-only pages via Tesseract (~3s/page)</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-ocr">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Dark Mode UI</h4>
+                <p>Force the extension dashboard to use a dark theme</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-darkmode">
+                <span class="slider"></span>
+              </label>
+            </div>
           </div>
 
           <!-- Custom Instructions/Template -->
           <div class="settings-group">
-            <h3>Prepended Context Template</h3>
-            <p class="group-desc">Add a custom instruction to prepend to your Markdown document when uploaded. Useful for giving immediate instructions to Claude or ChatGPT.</p>
+            <h3 class="template-header">
+              Prepended Context Template
+              <span class="info-tooltip-container">
+                <svg class="info-icon" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+                </svg>
+                <span class="tooltip-text">This custom instruction is glued to the absolute top of your converted Markdown files when uploaded. Useful for giving immediate prompts or rules to Claude or ChatGPT (e.g. &quot;Summarize this data&quot;) so you don't have to repeat them.</span>
+              </span>
+            </h3>
             
             <div class="text-area-container">
               <textarea id="setting-template" placeholder="Example: Here is the optimized markdown version of my file. Please analyze the data and wait for my questions..."></textarea>
@@ -222,6 +267,7 @@
   <script src="../lib/pdf.js"></script>
   <script src="../lib/mammoth.browser.min.js"></script>
   <script src="../lib/xlsx.full.min.js"></script>
+  <script src="../lib/jszip.min.js"></script>
   <script src="../converter.js"></script>
   <script src="popup.js"></script>
 </body>

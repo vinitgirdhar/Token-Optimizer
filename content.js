@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const TARGET_EXTENSIONS = ['pdf', 'docx', 'xlsx', 'csv', 'md'];
+  const TARGET_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md'];
 
   // Tracks synthetic re-dispatched events to prevent re-processing them
   const _processedEvents = new WeakSet();
@@ -15,6 +15,7 @@
    * Helper: Check if file name matches a supported extension based on settings
    */
   function isTargetFile(fileName, settings) {
+    if (!fileName) return false;
     const ext = fileName.split('.').pop().toLowerCase();
     if (!TARGET_EXTENSIONS.includes(ext)) return false;
     
@@ -38,7 +39,8 @@
   }
 
   const _STORAGE_DEFAULTS = {
-    extensions: { pdf: true, docx: true, xlsx: true, csv: true },
+    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
+    ocrEnabled: false,
     stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
     customTemplate: ''
   };
@@ -176,10 +178,16 @@
       md = await TokenOptimizerConverter.convertPDF(arrayBuffer, (current, total) => {
         const pct = 20 + Math.round((current / total) * 60);
         onProgress(pct, `Extracting page ${current} of ${total}...`);
-      });
+      }, { ocrEnabled: settings.ocrEnabled || false });
     } else if (ext === 'docx') {
       onProgress(40, 'Parsing Word tags...');
       md = await TokenOptimizerConverter.convertDOCX(arrayBuffer);
+    } else if (ext === 'pptx') {
+      onProgress(40, 'Extracting slides...');
+      md = await TokenOptimizerConverter.convertPPTX(arrayBuffer, (current, total) => {
+        const pct = 20 + Math.round((current / total) * 60);
+        onProgress(pct, `Extracting slide ${current} of ${total}...`);
+      });
     } else if (ext === 'xlsx') {
       onProgress(40, 'Compiling sheet tables...');
       md = await TokenOptimizerConverter.convertExcel(arrayBuffer);
@@ -272,100 +280,81 @@ ${operation}
   }
 
   /**
-   * DOM INTERCEPTION LAYER: input[type="file"] 'change' event
+   * Listen for request events from inject.js (MAIN world)
    */
-  document.addEventListener('change', async function (event) {
-    if (!_ctxAlive()) return; // Extension was reloaded — bypass old content script
-    const target = event.target;
-    if (target && target.tagName === 'INPUT' && target.type === 'file') {
-      const files = target.files;
-      if (!files || files.length === 0) return;
+  window.addEventListener('ato-request-optimization', async function (event) {
+    if (!_ctxAlive()) {
+      // Extension context is dead (reloaded or updated).
+      // Fallback immediately by returning original files to prevent freezing the page's upload process.
+      try {
+        const { transactionId, files } = event.detail;
+        window.dispatchEvent(new CustomEvent('ato-response-optimization', {
+          detail: {
+            transactionId: transactionId,
+            processedFiles: files
+          }
+        }));
+      } catch (_) {}
+      return;
+    }
+    
+    const { transactionId, eventType, files } = event.detail;
+    if (!files || files.length === 0) return;
 
-      if (_processedEvents.has(event)) return;
-
+    try {
       const settings = await getStorageData();
-      const hasTargets = Array.from(files).some(file => isTargetFile(file.name, settings));
-      
-      if (!hasTargets) return;
 
-      // Stop ChatGPT/Claude listeners immediately
-      event.stopImmediatePropagation();
-      event.preventDefault();
+      // Verify if any target extensions are active in settings
+      const hasActiveTargets = Array.from(files).some(file => file && file.name && isTargetFile(file.name, settings));
 
-      // Show floating loader UI
+      if (!hasActiveTargets) {
+        // Settings bypass: return original files unoptimized
+        window.dispatchEvent(new CustomEvent('ato-response-optimization', {
+          detail: {
+            transactionId: transactionId,
+            processedFiles: files
+          }
+        }));
+        return;
+      }
+
+      // Show floating loader UI only for active target files
       const targetFiles = Array.from(files).filter(f => isTargetFile(f.name, settings));
       const hud = showHUDOverlay(targetFiles.map(f => f.name));
 
       try {
         const processedFiles = await processFiles(files, hud, settings);
-        
-        // Re-inject optimized files into the input
-        const dataTransfer = new DataTransfer();
-        processedFiles.forEach(file => dataTransfer.items.add(file));
-        target.files = dataTransfer.files;
 
-        // Re-dispatch a plain Event so React/platform listeners pick it up normally
-        const customEvent = new Event('change', { bubbles: true, cancelable: true });
-        _processedEvents.add(customEvent);
-        target.dispatchEvent(customEvent);
+        // Dispatch response back to MAIN world
+        window.dispatchEvent(new CustomEvent('ato-response-optimization', {
+          detail: {
+            transactionId: transactionId,
+            processedFiles: processedFiles
+          }
+        }));
 
       } catch (err) {
-        console.error('Token Optimizer Intercept Error:', err);
+        console.error('Token Optimizer Process Error:', err);
+        // Fallback: send original files back on error
+        window.dispatchEvent(new CustomEvent('ato-response-optimization', {
+          detail: {
+            transactionId: transactionId,
+            processedFiles: files
+          }
+        }));
       } finally {
         removeHUDOverlay(hud);
       }
-    }
-  }, true); // Use capture phase to intercept before ChatGPT/Claude listeners execute!
-
-  /**
-   * DOM INTERCEPTION LAYER: Drag and Drop 'drop' event
-   */
-  document.addEventListener('drop', async function (event) {
-    if (!_ctxAlive()) return; // Extension was reloaded — bypass old content script
-    if (_processedEvents.has(event)) return;
-
-    const dataTransfer = event.dataTransfer;
-    if (!dataTransfer || !dataTransfer.files || dataTransfer.files.length === 0) return;
-
-    const settings = await getStorageData();
-    const targetFiles = Array.from(dataTransfer.files).filter(f => isTargetFile(f.name, settings));
-    
-    if (targetFiles.length === 0) return;
-
-    // Intercept drop event!
-    event.stopImmediatePropagation();
-    event.preventDefault();
-
-    const hud = showHUDOverlay(targetFiles.map(f => f.name));
-
-    try {
-      const processedFiles = await processFiles(dataTransfer.files, hud, settings);
-
-      // Create a fresh DataTransfer and trigger drop with optimized files
-      const newDT = new DataTransfer();
-      processedFiles.forEach(file => newDT.items.add(file));
-
-      // Modern browsers allow programmatically re-dispatching standard drop events
-      // Copy properties of original drop event
-      const customDropEvent = new DragEvent('drop', {
-        bubbles: true,
-        cancelable: true,
-        dataTransfer: newDT,
-        clientX: event.clientX,
-        clientY: event.clientY,
-        screenX: event.screenX,
-        screenY: event.screenY,
-        detail: { isOptimized: true }
-      });
-
-      _processedEvents.add(customDropEvent);
-      event.target.dispatchEvent(customDropEvent);
-
     } catch (err) {
-      console.error('Token Optimizer Intercept Drop Error:', err);
-    } finally {
-      removeHUDOverlay(hud);
+      console.error('ato-request-optimization Event Error:', err);
+      // Fallback: send original files back
+      window.dispatchEvent(new CustomEvent('ato-response-optimization', {
+        detail: {
+          transactionId: transactionId,
+          processedFiles: files
+        }
+      }));
     }
-  }, true); // Capture phase injection
+  });
 
 })();
