@@ -1,5 +1,5 @@
 /**
- * Claude Token Optimizer - Content Script DOM Interceptor
+ * AI Token Optimizer - Content Script DOM Interceptor
  * Injected into Claude, ChatGPT, Gemini, Perplexity
  */
 
@@ -105,7 +105,7 @@
           <div class="ato-logo-glow"></div>
           <div class="ato-logo-ring"></div>
         </div>
-        <h4 class="ato-title">Claude Token Optimizer</h4>
+        <h4 class="ato-title">AI Token Optimizer</h4>
       </div>
       <div class="ato-status-container">
         <div class="ato-file-info">
@@ -207,7 +207,7 @@
     const operation = ext === 'md'
       ? `Layout-optimized: ${file.name}`
       : `Converted: ${ext.toUpperCase()} → Markdown`;
-    let headerMeta = `<!-- [OPTIMIZED BY CLAUDE TOKEN OPTIMIZER]
+    let headerMeta = `<!-- [OPTIMIZED BY AI TOKEN OPTIMIZER]
 Original: ${file.name}
 ${operation}
 -->\n\n`;

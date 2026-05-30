@@ -1,5 +1,5 @@
 /**
- * Claude Token Optimizer - Background Service Worker (Manifest V3)
+ * AI Token Optimizer - Background Service Worker (Manifest V3)
  * Initializes default storage on first install.
  */
 

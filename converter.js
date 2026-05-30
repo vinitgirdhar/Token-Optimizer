@@ -1,5 +1,5 @@
 /**
- * Claude Token Optimizer - Conversion & Optimization Engine
+ * AI Token Optimizer - Conversion & Optimization Engine
  * Runs locally in browser (offline-capable, 100% private)
  */
 

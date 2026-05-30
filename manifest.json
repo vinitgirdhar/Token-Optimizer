@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Claude Token Optimizer",
+  "name": "AI Token Optimizer",
   "version": "1.1.0",
   "description": "Converts PDF, DOCX, PPTX, XLSX, and CSV uploads to optimized Markdown locally — reducing AI token usage by up to 70%. Two-column PDF support, OCR for scanned documents. 100% private, no data leaves your browser.",
   "permissions": [

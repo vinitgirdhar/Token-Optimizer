@@ -1,5 +1,5 @@
 /**
- * Claude Token Optimizer - Injected Main World Script
+ * AI Token Optimizer - Injected Main World Script
  * Intercepts change/drop events in the page context to bypass Chrome Extension isolated-world limitations.
  */
 (function () {
@@ -62,7 +62,7 @@
         }
       }
     } catch (err) {
-      console.error('[ClaudeTokenOptimizer] Fallback failed:', err);
+      console.error('[AITokenOptimizer] Fallback failed:', err);
     }
   }
 
@@ -87,7 +87,7 @@
         const pendingTx = _pendingTransactions.get(txId);
         if (pendingTx) {
           _pendingTransactions.delete(txId);
-          console.warn('[ClaudeTokenOptimizer] Transaction timed out. Falling back to original files.');
+          console.warn('[AITokenOptimizer] Transaction timed out. Falling back to original files.');
           fallbackToOriginal(pendingTx);
         }
       }, 60000); // 60 seconds safety window
@@ -131,7 +131,7 @@
       const pendingTx = _pendingTransactions.get(txId);
       if (pendingTx) {
         _pendingTransactions.delete(txId);
-        console.warn('[ClaudeTokenOptimizer] Transaction timed out. Falling back to original files.');
+        console.warn('[AITokenOptimizer] Transaction timed out. Falling back to original files.');
         fallbackToOriginal(pendingTx);
       }
     }, 60000); // 60 seconds safety window
@@ -215,7 +215,7 @@
         }
       }
     } catch (err) {
-      console.error('[ClaudeTokenOptimizer] Re-dispatch failed:', err);
+      console.error('[AITokenOptimizer] Re-dispatch failed:', err);
     }
   });
 

@@ -1,5 +1,5 @@
 /**
- * Claude Token Optimizer - Dashboard & Playground Controller
+ * AI Token Optimizer - Dashboard & Playground Controller
  */
 
 document.addEventListener('DOMContentLoaded', async function () {

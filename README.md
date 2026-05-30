@@ -1,8 +1,8 @@
-# 🧩 Claude Token Optimizer
+# 🧩 AI Token Optimizer
 
 > **Reduce AI token usage by up to 70% locally in your browser.** 100% Private, 0% Data Leaks.
 
-**Claude Token Optimizer** is a premium, offline-capable Google Chrome extension that intercepts file uploads (.pdf, .docx, .xlsx, .csv, and .md) on popular AI chat platforms (Claude.ai, ChatGPT, Gemini, and Perplexity), processes and compiles them locally in the browser to highly efficient, optimized Markdown, and uploads the clean Markdown version instead.
+**AI Token Optimizer** is a premium, offline-capable Google Chrome extension that intercepts file uploads (.pdf, .docx, .xlsx, .csv, and .md) on popular AI chat platforms (Claude.ai, ChatGPT, Gemini, and Perplexity), processes and compiles them locally in the browser to highly efficient, optimized Markdown, and uploads the clean Markdown version instead.
 
 This saves massive amounts of context window tokens, cuts down costs, speeds up AI reasoning, and bypasses platform-specific size or file type friction.
 
@@ -41,7 +41,7 @@ Since this is a developer-focused Chrome extension, you can install it easily in
 3. In the top-right corner of the Extensions page, toggle the **"Developer mode"** switch to **ON**.
 4. Click the **"Load unpacked"** button in the top-left corner.
 5. Select the folder containing this project (`chrome extension`).
-6. Pin the **Claude Token Optimizer** from your extensions bar for easy access!
+6. Pin the **AI Token Optimizer** from your extensions bar for easy access!
 
 ---
 
@@ -83,7 +83,7 @@ chrome-extension/
 
 ## 🛡️ Privacy & Security
 
-We believe your data is yours alone. **Claude Token Optimizer** requires no internet access permissions (other than matching chat sites for scripts injection) and contacts **zero external APIs or servers**. 
+We believe your data is yours alone. **AI Token Optimizer** requires no internet access permissions (other than matching chat sites for scripts injection) and contacts **zero external APIs or servers**. 
 - 🟢 **No telemetry or analytics tracking**
 - 🟢 **No remote script loading (all libraries are fully bundled locally)**
 - 🟢 **No file logging or third-party cookies**
