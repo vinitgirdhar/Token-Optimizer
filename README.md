@@ -58,27 +58,6 @@ The core engine (`converter.js`) leverages high-performance, sandboxed browser-l
 
 ---
 
-## 📂 Project Structure
-
-```
-chrome-extension/
-├── manifest.json            # Extension configuration (Manifest V3)
-├── image.png                # Extension brand icon
-├── background.js            # Background service worker (State & storage initialization)
-├── content.js               # Content script (Capture phase event hooking & HUD)
-├── converter.js             # Local parsing & optimization engine
-├── styles.css               # HUD progress overlay UI styling
-├── lib/                     # Offline library dependencies
-│   ├── pdf.js               # PDF document engine
-│   ├── pdf.worker.js        # PDF worker service
-│   ├── mammoth.browser.min.js # Word document converter
-│   └── xlsx.full.min.js     # SheetJS Excel parser
-└── popup/                   # Extension popup interface
-    ├── popup.html           # Dashboard & Playground UI
-    ├── popup.js             # Interactive controller
-    └── popup.css            # Custom glassmorphic styling
-```
-
 ---
 
 ## 🛡️ Privacy & Security
@@ -92,4 +71,4 @@ We believe your data is yours alone. **AI Token Optimizer** requires no internet
 
 ## 📝 License
 
-This project is licensed under the MIT License. Feel free to fork, modify, and distribute as you see fit!
+This project is licensed under the MIT License by **Vinit Girdhar**. Feel free to fork, modify, and distribute as you see fit!
