@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const metricOriginal = document.getElementById('metric-original');
   const metricOptimized = document.getElementById('metric-optimized');
   const metricSaved = document.getElementById('metric-saved');
+  const metricTokensSaved = document.getElementById('metric-tokens-saved');
 
   // Settings Elements
   const togglePdf = document.getElementById('setting-pdf');
@@ -253,14 +254,22 @@ document.addEventListener('DOMContentLoaded', async function () {
     metricOriginal.textContent = origText;
     metricOptimized.textContent = optText;
 
-    // Ratio & Saved computation
-    let savingsRatio = 0;
+    // Data Saved computation (byte-based)
     const savedBytes = Math.max(0, statistics.totalOriginalBytes - statistics.totalOptimizedBytes);
     const savedText = TokenOptimizerConverter.formatBytes(savedBytes);
     metricSaved.textContent = savedText;
 
+    // Tokens Saved display
+    if (metricTokensSaved) {
+      metricTokensSaved.textContent = (statistics.totalTokensSaved || 0).toLocaleString();
+    }
+
+    // Ratio badge: compute byte savings in the unified text domain.
+    // Since both totalOriginalBytes and totalOptimizedBytes are text representations,
+    // this directly maps to the exact LLM token cost reduction.
+    let savingsRatio = 0;
     if (statistics.totalOriginalBytes > 0) {
-      savingsRatio = Math.max(0, Math.round((savedBytes / statistics.totalOriginalBytes) * 100));
+      savingsRatio = Math.max(0, Math.round(((statistics.totalOriginalBytes - statistics.totalOptimizedBytes) / statistics.totalOriginalBytes) * 100));
     }
     
     statRatio.textContent = `${savingsRatio}% Saved`;
@@ -386,14 +395,18 @@ Format: ${ext.toUpperCase()} to Markdown
       playResFilename.textContent = name;
 
       const finalSizeText = TokenOptimizerConverter.formatBytes(new Blob([finalContent]).size);
-      playResStats.textContent = `${finalSizeText} (Saved ~${savingsPct}% tokens)`;
+      playResStats.textContent = `${finalSizeText} (Saved ~${tokensSaved.toLocaleString()} tokens, ${savingsPct}%)`;
 
       playOutput.value = finalContent;
 
-      // Persist to dashboard stats
+      // Persist to dashboard stats (using the unified text domain to ensure correct and positive metrics)
+      const originalText = headerMeta + md;
+      const originalSize = new Blob([originalText]).size;
+      const finalSize = new Blob([finalContent]).size;
+
       statistics.totalFilesOptimized += 1;
-      statistics.totalOriginalBytes += file.size;
-      statistics.totalOptimizedBytes += new Blob([finalContent]).size;
+      statistics.totalOriginalBytes += originalSize;
+      statistics.totalOptimizedBytes += finalSize;
       statistics.totalTokensSaved += tokensSaved;
       updateDashboardUI();
       const savePlaygroundStatsFallback = () => {
@@ -437,7 +450,7 @@ Format: ${ext.toUpperCase()} to Markdown
       // Visual feedback
       const origText = playCopyBtn.innerHTML;
       playCopyBtn.innerHTML = `
-        <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;fill:none;stroke:currentColor;"><polyline points="20 6 9 17 4 12"></polyline></svg>
         Copied!
       `;
       playCopyBtn.style.color = 'var(--theme-blue)';

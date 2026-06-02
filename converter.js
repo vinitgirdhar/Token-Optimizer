@@ -1341,12 +1341,14 @@ const TokenOptimizerConverter = (function () {
 
   /**
    * Token and Layout Optimization Engine
+   * Performs aggressive but safe text compression to minimize token usage
+   * while preserving semantic meaning and structure.
    */
   function optimizeMarkdown(markdown, options = {}) {
     const config = Object.assign({
       trimMultipleNewlines: true,
       compactTables: true,
-      stripComments: false,
+      stripComments: true,
       stripInlineStyle: true
     }, options);
 
@@ -1355,25 +1357,73 @@ const TokenOptimizerConverter = (function () {
     // Normalize CRLF to LF to ensure reliable, cross-platform newline processing
     result = result.replace(/\r\n/g, '\n');
 
-    // Remove inline CSS or styling elements
-    if (config.stripInlineStyle) {
-      result = result.replace(/style="[^"]*"/gi, '');
-      result = result.replace(/class="[^"]*"/gi, '');
+    // ── Protect code blocks from whitespace compression ──────────────
+    // Extract fenced code blocks and replace with placeholders so that
+    // subsequent whitespace / table passes don't corrupt them.
+    const codeBlocks = [];
+    result = result.replace(/(```[\s\S]*?```)/g, (match) => {
+      const idx = codeBlocks.length;
+      codeBlocks.push(match);
+      return `\n%%CODEBLOCK_${idx}%%\n`;
+    });
+
+    // ── Strip HTML comments ─────────────────────────────────────────
+    if (config.stripComments) {
+      result = result.replace(/<!--[\s\S]*?-->/g, '');
     }
 
-    // Collapse multiple consecutive newlines down to a max of two
+    // ── Remove inline CSS / class attributes ────────────────────────
+    if (config.stripInlineStyle) {
+      result = result.replace(/\s*style="[^"]*"/gi, '');
+      result = result.replace(/\s*class="[^"]*"/gi, '');
+    }
+
+    // ── Compact Markdown tables ─────────────────────────────────────
+    // Trim excessive padding inside table cells and simplify separator rows
+    if (config.compactTables) {
+      result = result.replace(/^(\|.*\|)$/gm, (line) => {
+        // Separator row: collapse to minimal dashes
+        if (/^\|[\s\-:|]+\|$/.test(line)) {
+          return line.replace(/\s*-{2,}\s*/g, '-').replace(/\s*:\s*/g, ':');
+        }
+        // Data / header row: trim each cell to single-space padding
+        return line.replace(/\|\s{2,}/g, '| ').replace(/\s{2,}\|/g, ' |');
+      });
+    }
+
+    // ── Collapse redundant inline whitespace ────────────────────────
+    // Reduce runs of spaces/tabs to a single space on each line.
+    // Preserve leading whitespace for list indentation.
+    result = result.split('\n').map(line => {
+      // Don't touch lines that are only whitespace (blank lines)
+      if (!line.trim()) return '';
+      // Preserve leading indent, compact the rest
+      const match = line.match(/^(\s*)(.*)/);
+      if (!match) return line;
+      const indent = match[1];
+      let body = match[2];
+      // Collapse multiple spaces within body text to single space
+      body = body.replace(/[ \t]{2,}/g, ' ').trimEnd();
+      return indent + body;
+    }).join('\n');
+
+    // ── Collapse multiple consecutive newlines to max two ───────────
     if (config.trimMultipleNewlines) {
       result = result.replace(/\n{3,}/g, '\n\n');
     }
 
-    // Trim trailing whitespace from all lines
-    result = result.split('\n').map(line => line.trimEnd()).join('\n');
-
-    // Clean up empty Markdown lists or headings
+    // ── Clean up empty Markdown constructs ───────────────────────────
     result = result.replace(/\n#+\s*\n/g, '\n');
-    result = result.replace(/\n\*\s*\n/g, '\n');
+    result = result.replace(/\n[-*]\s*\n/g, '\n');
 
-    // Split heading merge regex removed to prevent destructive heading loss in optimizeMarkdown
+    // ── Simplify page-break markers ─────────────────────────────────
+    // Convert verbose markers like "--- [Page 3] ---" to compact form
+    result = result.replace(/---\s*\[Page\s+(\d+)\]\s*---/g, '--- Page $1 ---');
+
+    // ── Restore code blocks ─────────────────────────────────────────
+    result = result.replace(/%%CODEBLOCK_(\d+)%%/g, (_, idx) => {
+      return codeBlocks[parseInt(idx)];
+    });
 
     return result.trim();
   }

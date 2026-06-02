@@ -23,15 +23,15 @@
     <nav class="app-nav">
       <div class="nav-indicator"></div>
       <button class="nav-btn active" data-tab="dashboard">
-        <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H5v-2h12v2zm0-4H5V7h12v2zm0 8H5v-2h12v2z"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
         Overview
       </button>
       <button class="nav-btn" data-tab="playground">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.4z"/></svg>
+        <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
         Playground
       </button>
       <button class="nav-btn" data-tab="settings">
-        <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+        <svg viewBox="0 0 24 24"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="2" y1="14" x2="6" y2="14"></line><line x1="10" y1="8" x2="14" y2="8"></line><line x1="18" y1="16" x2="22" y2="16"></line></svg>
         Settings
       </button>
     </nav>
@@ -43,7 +43,7 @@
         <!-- Stats Card -->
         <div class="stat-card stat-card-full">
           <div class="stat-icon purple">
-            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"></path><path d="M14 2v4a2 2 0 0 0 2 2h4"></path></svg>
           </div>
           <div class="stat-info">
             <h3 id="stat-files">0</h3>
@@ -60,28 +60,33 @@
           
           <div class="compression-stats-grid">
             <div class="comp-stat-item">
-              <span class="comp-label">Original Files</span>
+              <span class="comp-label">Pre-Optimized</span>
               <span class="comp-value" id="metric-original">0 Bytes</span>
             </div>
             <div class="comp-stat-arrow">
-              <svg viewBox="0 0 24 24"><path d="M16.01 11H4v2h12.01v3L20 12l-3.99-4z"/></svg>
+              <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
             </div>
             <div class="comp-stat-item">
-              <span class="comp-value-badge">Markdown</span>
+              <span class="comp-value-badge">Optimized</span>
               <span class="comp-value" id="metric-optimized">0 Bytes</span>
             </div>
           </div>
-
-          <div class="savings-callout">
-            <span class="savings-label">Total Data Saved</span>
-            <span class="savings-value" id="metric-saved">0 Bytes</span>
+          <div class="savings-grid">
+            <div class="savings-card">
+              <span class="savings-label">Total Data Saved</span>
+              <span class="savings-value" id="metric-saved">0 Bytes</span>
+            </div>
+            <div class="savings-card">
+              <span class="savings-label">Total Tokens Saved</span>
+              <span class="savings-value" id="metric-tokens-saved">0</span>
+            </div>
           </div>
         </div>
 
         <!-- Active Context Alert -->
         <div class="context-alert">
           <div class="alert-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           </div>
           <div class="alert-text">
             <h4>No Upload Friction</h4>
@@ -96,7 +101,7 @@
           <!-- Dropzone -->
           <div class="dropzone" id="play-dropzone">
             <div class="dropzone-content">
-              <svg class="drop-icon" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m8 16 4-4 4 4"></path></svg>
               <h3>Drag & Drop File Here</h3>
               <p>Supports .pdf, .docx, .pptx, .xlsx, .csv, .md</p>
               <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.pptx,.xlsx,.csv,.md">
@@ -120,7 +125,7 @@
               </div>
               <div class="result-actions">
                 <button class="btn icon-btn" id="play-copy-btn" title="Copy to Clipboard">
-                  <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                  <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                   Copy
                 </button>
                 <button class="btn icon-btn" id="play-reset-btn">
@@ -232,9 +237,7 @@
             <h3 class="template-header">
               Prepended Context Template
               <span class="info-tooltip-container">
-                <svg class="info-icon" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
-                </svg>
+                <svg class="info-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 <span class="tooltip-text">This custom instruction is glued to the absolute top of your converted Markdown files when uploaded. Useful for giving immediate prompts or rules to Claude or ChatGPT (e.g. &quot;Summarize this data&quot;) so you don't have to repeat them.</span>
               </span>
             </h3>

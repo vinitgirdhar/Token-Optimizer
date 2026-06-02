@@ -219,7 +219,7 @@ body {
   white-space: nowrap;
 }
 
-.nav-btn svg { width: 13px; height: 13px; fill: currentColor; flex-shrink: 0; }
+.nav-btn svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
 .nav-btn:hover {
   color: var(--t1);
@@ -274,7 +274,7 @@ body {
   flex-shrink: 0;
 }
 
-.stat-icon svg { width: 15px; height: 15px; fill: currentColor; }
+.stat-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .stat-icon.purple { background: var(--purple-bg); color: var(--purple); }
 .stat-icon.emerald { background: var(--theme-blue-bg);  color: var(--theme-blue); }
 .stat-icon.blue    { background: var(--blue-bg);   color: var(--blue); }
@@ -396,38 +396,51 @@ body {
 .comp-stat-arrow svg {
   width: 16px;
   height: 16px;
-  fill: currentColor;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-.savings-callout {
-  position: relative;
-  background: linear-gradient(135deg, var(--theme-blue-bg) 0%, rgba(37, 99, 235, 0.03) 100%);
-  border: 1px dashed var(--theme-blue-bd);
+.savings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.savings-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--r2);
-  padding: 12px 14px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.03);
-  overflow: hidden;
+  gap: 3px;
+  box-shadow: var(--s1);
+  transition: border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+
+.savings-card:hover {
+  background: var(--surface);
+  border-color: var(--theme-blue-bd);
 }
 
 .savings-label {
-  font-size: 10px;
+  font-size: 8.5px;
   font-weight: 700;
-  color: var(--theme-blue);
+  color: var(--t3);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .savings-value {
-  font-size: 22px;
-  font-weight: 850;
-  color: var(--theme-blue);
-  letter-spacing: -0.03em;
-  text-shadow: 0 2px 10px rgba(37, 99, 235, 0.12);
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--t1);
+  letter-spacing: -0.02em;
 }
 
 /* Info alert */
@@ -442,7 +455,7 @@ body {
 }
 
 .alert-icon { color: var(--purple); display: flex; align-items: flex-start; flex-shrink: 0; }
-.alert-icon svg { width: 15px; height: 15px; fill: currentColor; }
+.alert-icon svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
 .alert-text h4 { font-size: 11px; font-weight: 700; color: var(--t1); margin-bottom: 2px; }
 .alert-text p  { font-size: 10.5px; color: var(--t3); line-height: 1.4; }
@@ -614,7 +627,7 @@ body {
   letter-spacing: 0;
 }
 
-.btn.icon-btn svg { width: 11px; height: 11px; fill: currentColor; }
+.btn.icon-btn svg { width: 11px; height: 11px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .btn.icon-btn:hover { background: var(--bg); color: var(--t1); opacity: 1; transform: none; }
 
 /* ─── SETTINGS ───────────────────────────────────────────── */
@@ -796,12 +809,16 @@ input:checked + .slider:before { transform: translateX(16px); }
 .info-icon {
   width: 14px;
   height: 14px;
-  fill: var(--t4);
-  transition: fill 0.2s var(--ease);
+  fill: none;
+  stroke: var(--t4);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.2s var(--ease);
 }
 
 .info-tooltip-container:hover .info-icon {
-  fill: var(--theme-blue);
+  stroke: var(--theme-blue);
 }
 
 .tooltip-text {
@@ -956,7 +973,4 @@ body.dark-theme .tooltip-text::after {
   border-color: transparent transparent var(--surface-2) transparent;
 }
 
-body.dark-theme .savings-callout {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.02) 100%);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
+

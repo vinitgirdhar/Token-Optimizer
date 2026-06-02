@@ -119,8 +119,8 @@
         <div class="ato-hud-details">
           <span id="ato-progress-status">Parsing document...</span>
           <span class="ato-saving-badge" id="ato-saving-badge" style="display: none;">
-            <svg viewBox="0 0 24 24"><path d="M7 11h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/><path d="M5 3a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm14 16H5V7h14zm0-14H5v1.99h14z"/></svg>
-            <span id="ato-saving-value">0%</span> tokens saved
+            <svg viewBox="0 0 24 24"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>
+            <span id="ato-saving-value">0%</span> (<span id="ato-saving-count">0</span>) saved
           </span>
         </div>
       </div>
@@ -133,7 +133,7 @@
   /**
    * HTML UI: Update the HUD state
    */
-  function updateHUDOverlay(hud, fileName, fileIndex, totalFiles, progressPercent, statusText, savingsPercent = null) {
+  function updateHUDOverlay(hud, fileName, fileIndex, totalFiles, progressPercent, statusText, savingsPercent = null, tokensSaved = null) {
     if (!hud) return;
     
     const fileNameEl = hud.querySelector('#ato-current-file');
@@ -142,6 +142,7 @@
     const statusTextEl = hud.querySelector('#ato-progress-status');
     const savingBadgeEl = hud.querySelector('#ato-saving-badge');
     const savingValueEl = hud.querySelector('#ato-saving-value');
+    const savingCountEl = hud.querySelector('#ato-saving-count');
 
     if (fileNameEl) fileNameEl.textContent = fileName;
     if (fileIndexEl) fileIndexEl.textContent = `${fileIndex} / ${totalFiles}`;
@@ -151,6 +152,9 @@
     if (savingsPercent !== null && savingBadgeEl && savingValueEl) {
       savingBadgeEl.style.display = 'flex';
       savingValueEl.textContent = `${savingsPercent}%`;
+    }
+    if (tokensSaved !== null && savingCountEl) {
+      savingCountEl.textContent = tokensSaved.toLocaleString() + ' tokens';
     }
   }
 
@@ -223,8 +227,9 @@ ${operation}
     // Compare raw vs optimized body only — the header comment is fixed overhead, not a saving
     const finalEstTokens = TokenOptimizerConverter.estimateTokens(optimizedMd);
 
-    // Calculate metrics
-    const originalSize = file.size;
+    // Calculate metrics in the unified text domain (both pre-optimized and optimized text with header)
+    const originalText = headerMeta + md;
+    const originalSize = new Blob([originalText], { type: 'text/markdown' }).size;
     const finalSize = new Blob([finalContent], { type: 'text/markdown' }).size;
     
     // Save tokens represents difference between unoptimized raw string tokens and optimized tokens
@@ -232,7 +237,7 @@ ${operation}
     const tokensSaved = Math.max(0, rawEstTokens - finalEstTokens);
     const savingsPercent = rawEstTokens > 0 ? Math.round((tokensSaved / rawEstTokens) * 100) : 0;
 
-    onProgress(100, 'Conversion complete!', savingsPercent);
+    onProgress(100, 'Conversion complete!', savingsPercent, tokensSaved);
 
     // 4. Update Global/Extension Stats
     await updateStatistics(1, originalSize, finalSize, tokensSaved);
@@ -258,8 +263,8 @@ ${operation}
         updateHUDOverlay(hud, file.name, i + 1, totalFiles, 5, 'Reading file...');
         
         try {
-          const optimizedFile = await processFile(file, settings, (percent, status, savings) => {
-            updateHUDOverlay(hud, file.name, i + 1, totalFiles, percent, status, savings);
+          const optimizedFile = await processFile(file, settings, (percent, status, savings, savedTokens) => {
+            updateHUDOverlay(hud, file.name, i + 1, totalFiles, percent, status, savings, savedTokens);
           });
           optimizedFiles.push(optimizedFile);
           
