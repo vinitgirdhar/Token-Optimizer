@@ -13,7 +13,6 @@ This saves massive amounts of context window tokens, cuts down costs, speeds up 
 - 🔒 **100% Local & Private**: All document parsing (PDF, Word, Excel, CSV) happens entirely inside your browser sandbox. No file data ever leaves your device.
 - 📉 **Up to 70% Token Savings**: Smart compaction removes redundant empty spaces, splits long headings, and eliminates bloated document tags.
 - ⚡ **Seamless Interception**: Automatically catches `<input type="file">` change events and drag-and-drop triggers on chat targets using capture-phase event hooking.
-- 📊 **Interactive HUD**: Displays a clean, smooth, animated loading indicator in the bottom/top-right of your screen showing optimization progress and immediate token-saving ratios.
 - 🧪 **Popup Playground**: Open the extension dashboard to drag-and-drop any document and view the structured Markdown preview instantly, copy it to your clipboard, or tweak options.
 - 📈 **Savings Dashboard**: Live-track the total files processed, original file sizes vs. optimized markdown sizes, and estimated cumulative tokens saved.
 - ⚙️ **Custom Instructions Template**: Prepend a custom system prompt to every optimized document automatically (e.g., *"Here is the optimized markdown version of my sheet. Tidy up the figures and wait for my instructions..."*).
