@@ -41,6 +41,8 @@
   const _STORAGE_DEFAULTS = {
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
     ocrEnabled: false,
+    confirmBeforeConvert: true,
+    autoConvertChoice: true,
     stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
     customTemplate: ''
   };
@@ -282,6 +284,51 @@ ${operation}
     }
 
     return optimizedFiles;
+  }
+
+  /**
+   * Respond to settings requests from inject.js (MAIN world)
+   */
+  window.addEventListener('ato-request-settings', async function () {
+    const data = await getStorageData();
+    window.dispatchEvent(new CustomEvent('ato-response-settings', {
+      detail: {
+        confirmBeforeConvert: data.confirmBeforeConvert !== false,
+        autoConvertChoice: data.autoConvertChoice !== false
+      }
+    }));
+  });
+
+  /**
+   * Save user preference from inject.js confirmation popup
+   */
+  window.addEventListener('ato-save-preference', async function (event) {
+    if (!_ctxAlive() || !event.detail) return;
+    const { confirmBeforeConvert, autoConvertChoice } = event.detail;
+    try {
+      await new Promise((resolve) => {
+        chrome.storage.local.set({ confirmBeforeConvert, autoConvertChoice }, resolve);
+      });
+    } catch (_) { /* context may have expired */ }
+  });
+
+  /**
+   * Broadcast updated settings to inject.js whenever storage changes
+   */
+  if (_ctxAlive() && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area !== 'local') return;
+      if (changes.confirmBeforeConvert || changes.autoConvertChoice) {
+        getStorageData().then((data) => {
+          window.dispatchEvent(new CustomEvent('ato-response-settings', {
+            detail: {
+              confirmBeforeConvert: data.confirmBeforeConvert !== false,
+              autoConvertChoice: data.autoConvertChoice !== false
+            }
+          }));
+        });
+      }
+    });
   }
 
   /**

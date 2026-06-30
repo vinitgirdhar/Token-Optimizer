@@ -89,8 +89,8 @@
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
           </div>
           <div class="alert-text">
-            <h4>No Upload Friction</h4>
-            <p>Simply upload your PDFs, DOCX, or Excel sheets directly in Claude/ChatGPT. Conversion is fully automatic.</p>
+            <h4>Smart Upload Detection</h4>
+            <p>Upload your PDFs, DOCX, or Excel sheets in Claude/ChatGPT. You'll be asked whether to convert to Markdown or upload the original file.</p>
           </div>
         </div>
       </section>
@@ -204,11 +204,28 @@
             </div>
           </div>
 
+          <!-- Conversion Behavior -->
+          <div class="settings-group">
+            <h3>Conversion Behavior</h3>
+            <p class="group-desc">Control how the extension handles file uploads on AI chat platforms.</p>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Ask Before Converting</h4>
+                <p>Show a confirmation popup each time you upload a convertible file</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-confirm" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
           <!-- OCR Settings -->
           <div class="settings-group">
             <h3>Advanced Features</h3>
             <p class="group-desc">Optional processing capabilities that enhance extraction quality for specific document types.</p>
-            
+
             <div class="toggle-row">
               <div class="toggle-label">
                 <h4>OCR for Scanned PDFs</h4>

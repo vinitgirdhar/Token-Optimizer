@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   const toggleXlsx = document.getElementById('setting-xlsx');
   const toggleCsv = document.getElementById('setting-csv');
   const togglePptx = document.getElementById('setting-pptx');
+  const toggleConfirm = document.getElementById('setting-confirm');
   const toggleOcr = document.getElementById('setting-ocr');
   const toggleDarkMode = document.getElementById('setting-darkmode');
   const templateInput = document.getElementById('setting-template');
@@ -87,6 +88,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const defaultSettings = {
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
     ocrEnabled: false,
+    confirmBeforeConvert: true,
+    autoConvertChoice: true,
     darkModeEnabled: false,
     stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
     customTemplate: ''
@@ -99,6 +102,8 @@ document.addEventListener('DOMContentLoaded', async function () {
       const merged = {
         extensions: { ...defaultSettings.extensions, ...items.extensions },
         ocrEnabled: items.ocrEnabled !== undefined ? items.ocrEnabled : defaultSettings.ocrEnabled,
+        confirmBeforeConvert: items.confirmBeforeConvert !== undefined ? items.confirmBeforeConvert : defaultSettings.confirmBeforeConvert,
+        autoConvertChoice: items.autoConvertChoice !== undefined ? items.autoConvertChoice : defaultSettings.autoConvertChoice,
         darkModeEnabled: items.darkModeEnabled !== undefined ? items.darkModeEnabled : defaultSettings.darkModeEnabled,
         stats: { ...defaultSettings.stats, ...items.stats },
         customTemplate: items.customTemplate !== undefined ? items.customTemplate : defaultSettings.customTemplate
@@ -138,6 +143,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     toggleXlsx.checked = items.extensions.xlsx;
     toggleCsv.checked = items.extensions.csv;
     togglePptx.checked = items.extensions.pptx;
+    toggleConfirm.checked = items.confirmBeforeConvert !== false;
     toggleOcr.checked = items.ocrEnabled;
     toggleDarkMode.checked = items.darkModeEnabled || false;
 
@@ -173,6 +179,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         pptx: togglePptx.checked
       },
       ocrEnabled: toggleOcr.checked,
+      confirmBeforeConvert: toggleConfirm.checked,
+      autoConvertChoice: true,
       darkModeEnabled: toggleDarkMode.checked,
       customTemplate: templateInput.value
     };
@@ -199,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Trigger Save on any change
-  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleOcr, toggleDarkMode].forEach(el => {
+  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleConfirm, toggleOcr, toggleDarkMode].forEach(el => {
     el.addEventListener('change', saveSettings);
   });
   templateInput.addEventListener('input', saveSettings);

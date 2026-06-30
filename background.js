@@ -9,6 +9,8 @@ chrome.runtime.onInstalled.addListener((details) => {
   chrome.storage.local.set({
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
     ocrEnabled: false,
+    confirmBeforeConvert: true,
+    autoConvertChoice: true,
     stats: {
       totalFilesOptimized: 0,
       totalOriginalBytes: 0,
