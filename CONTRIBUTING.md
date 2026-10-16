@@ -205,7 +205,7 @@ Token-Optimizer/
 
 ## 🧪 Testing Your Changes
 
-Since there is no automated test suite yet, manual verification is required:
+Run the unit tests for the converter's pure logic first: `node --test tests/converter.test.js`. Browser-only paths (PDF, DOCX, images, interception) still need manual verification:
 
 1. **Reload the extension** at `chrome://extensions/` after every change.
 2. **Test the popup playground:** open the extension popup, drag in a sample document, and verify the Markdown preview is correct.

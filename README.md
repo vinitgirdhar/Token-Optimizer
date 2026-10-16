@@ -6,7 +6,7 @@
 100% Private. 0% Data Leaks.
 
 ![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
+![Version](https://img.shields.io/badge/version-1.2.0-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Local-success)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
@@ -15,7 +15,7 @@
 
 ---
 
-**AI Token Optimizer** is an offline-capable Google Chrome extension that intercepts file uploads (`.pdf`, `.docx`, `.xlsx`, `.csv`, and `.md`) on popular AI chat platforms — **Claude.ai, ChatGPT, Gemini, and Perplexity** — converts them locally in your browser into highly efficient, optimized Markdown, and uploads the clean Markdown version instead.
+**AI Token Optimizer** is an offline-capable Google Chrome extension that intercepts file uploads (`.pdf`, `.docx`, `.pptx`, `.xlsx`, `.csv`, `.md`, `.json`, `.html`, `.txt`, `.log`, and images) on popular AI chat platforms — **Claude.ai, ChatGPT, Gemini, Perplexity**, plus Grok, DeepSeek, Mistral, Copilot, AI Studio and Poe in beta — converts documents locally into optimized Markdown, downscales oversized images, and uploads the lean version instead.
 
 The result: massive context-window savings, lower API costs, faster AI reasoning, and no more platform-specific file size or file type friction.
 
@@ -75,6 +75,10 @@ Raw documents are extremely token-inefficient. A `.docx` or `.pdf` file carries 
 | **Excel** (`.xlsx` / `.xls`) | `SheetJS` workbook cell mapper | Table `.md` | Token-efficient clean table rows (blanks and unused cells stripped) |
 | **CSV** (`.csv`) | Native text decoder with SheetJS parsing | Table `.md` | Layout-compressed tables |
 | **Markdown** (`.md`) | Native text pass-through | Optimized `.md` | Whitespace compaction, multi-newline trimming |
+| **JSON** (`.json`) | Native `JSON.parse` | Fenced `.md` | Minified (indentation is pure token overhead); JSON Lines falls back to the text pass |
+| **HTML** (`.html` / `.htm`) | Inert `DOMParser` + the DOCX Markdown walker | Semantic `.md` | Scripts, styles, SVG and markup stripped |
+| **Text / Logs** (`.txt` / `.log`) | Native text decoder | `.md` | ANSI colour codes stripped, consecutive duplicate lines folded (`line [x400]`) |
+| **Images** (`.png` / `.jpg` / `.webp`) | `OffscreenCanvas` | Same format | Downscaled to a 1568px long edge — the resolution vision models actually use; billed tokens scale with pixel count |
 
 ## 🌐 Supported Platforms
 
@@ -84,6 +88,7 @@ Raw documents are extremely token-inefficient. A `.docx` or `.pdf` file carries 
 | [ChatGPT](https://chatgpt.com) | ✅ |
 | [Gemini](https://gemini.google.com) | ✅ |
 | [Perplexity](https://www.perplexity.ai) | ✅ |
+| [Grok](https://grok.com), [DeepSeek](https://chat.deepseek.com), [Mistral Le Chat](https://chat.mistral.ai), [Copilot](https://copilot.microsoft.com), [Google AI Studio](https://aistudio.google.com), [Poe](https://poe.com) | 🧪 Beta (interception not yet verified on every site) |
 
 ---
 
@@ -221,11 +226,27 @@ Found a bug or have a feature idea? [Open an issue](https://github.com/vinitgird
 
 ## 🗺️ Roadmap
 
-- [ ] PowerPoint (`.pptx`) dedicated parsing pipeline
-- [ ] Additional AI platform support
-- [ ] Per-format optimization settings
+AI usage has shifted: models take images natively, context windows are 200K–1M tokens, people paste logs and JSON as often as PDFs, and more chat apps compete for attention. The plan follows that shift.
+
+**Phase 1 — Broader inputs (v1.2, shipped)**
+- [x] Image downscaling to the resolution vision models use (largest real token saving for screenshots/photos)
+- [x] JSON minification, HTML→Markdown, log de-duplication
+- [x] Grok, DeepSeek, Mistral, Copilot, AI Studio, Poe (beta)
+- [x] Tokenizer-aware estimate (whitespace runs no longer counted as savings)
+- [x] Untrusted file names / HTML handled without `innerHTML` (XSS fix)
+- [x] Disabled file types no longer trigger the confirm prompt
+- [x] Unit tests: `node --test tests/converter.test.js`
+
+**Phase 2 — Smarter compression**
+- [ ] Paste interception: optimize large pasted text (logs, JSON, code) the same way as uploads
+- [ ] CSV/TSV output option for big tables (pipe-table padding costs tokens on every cell)
+- [ ] Context-window fit indicator (e.g. "uses 12% of a 200K window") in the HUD
+- [ ] Per-format settings (OCR language, image max edge, table format)
+
+**Phase 3 — Reach**
 - [ ] Chrome Web Store release
 - [ ] Firefox (WebExtensions) port
+- [ ] Optional on-device summarisation via Chrome's built-in AI (Gemini Nano) for documents too large for any context window
 
 Have a suggestion? [Open a feature request](https://github.com/vinitgirdhar/Token-Optimizer/issues)!
 

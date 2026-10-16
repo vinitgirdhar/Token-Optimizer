@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  const TARGET_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md'];
+  const TARGET_EXTENSIONS = TokenOptimizerConverter.DOC_EXTENSIONS.concat(TokenOptimizerConverter.IMAGE_EXTENSIONS);
 
   // Tracks synthetic re-dispatched events to prevent re-processing them
   const _processedEvents = new WeakSet();
@@ -21,7 +21,7 @@
     
     // Check settings toggle
     if (settings && settings.extensions) {
-      return settings.extensions[ext] !== false;
+      return settings.extensions[TokenOptimizerConverter.settingKey(ext)] !== false;
     }
     return true;
   }
@@ -39,7 +39,7 @@
   }
 
   const _STORAGE_DEFAULTS = {
-    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
+    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
     confirmBeforeConvert: true,
     autoConvertChoice: true,
@@ -111,7 +111,7 @@
       </div>
       <div class="ato-status-container">
         <div class="ato-file-info">
-          <span class="ato-file-name" id="ato-current-file">${initialFile}</span>
+          <span class="ato-file-name" id="ato-current-file"></span>
           <span class="ato-file-badge" id="ato-file-index">1 / ${filesCount}</span>
         </div>
         <div class="ato-progress-track">
@@ -128,6 +128,7 @@
       </div>
     `;
 
+    hud.querySelector('#ato-current-file').textContent = initialFile;
     document.body.appendChild(hud);
     return hud;
   }
@@ -174,38 +175,28 @@
    */
   async function processFile(file, settings, onProgress) {
     const ext = file.name.split('.').pop().toLowerCase();
+    if (TokenOptimizerConverter.IMAGE_EXTENSIONS.includes(ext)) {
+      onProgress(40, 'Downscaling image...');
+      const result = await TokenOptimizerConverter.optimizeImage(file, file.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`);
+      if (!result) {
+        onProgress(100, 'Already optimal size', 0, 0);
+        return file;
+      }
+      const saved = result.tokensBefore - result.tokensAfter;
+      onProgress(100, 'Image optimized!', Math.round((saved / result.tokensBefore) * 100), saved);
+      await updateStatistics(1, file.size, result.blob.size, saved);
+      return new File([result.blob], file.name, { type: result.blob.type });
+    }
+
     const arrayBuffer = await readFileAsArrayBuffer(file);
-    let md = '';
-
     onProgress(20, 'Parsing structure...');
-
-    // 1. Convert to Markdown
-    if (ext === 'pdf') {
-      md = await TokenOptimizerConverter.convertPDF(arrayBuffer, (current, total) => {
+    const md = await TokenOptimizerConverter.convertFile(arrayBuffer, ext, {
+      ocrEnabled: settings.ocrEnabled || false,
+      onProgress: (current, total) => {
         const pct = 20 + Math.round((current / total) * 60);
         onProgress(pct, `Extracting page ${current} of ${total}...`);
-      }, { ocrEnabled: settings.ocrEnabled || false });
-    } else if (ext === 'docx') {
-      onProgress(40, 'Parsing Word tags...');
-      md = await TokenOptimizerConverter.convertDOCX(arrayBuffer);
-    } else if (ext === 'pptx') {
-      onProgress(40, 'Extracting slides...');
-      md = await TokenOptimizerConverter.convertPPTX(arrayBuffer, (current, total) => {
-        const pct = 20 + Math.round((current / total) * 60);
-        onProgress(pct, `Extracting slide ${current} of ${total}...`);
-      });
-    } else if (ext === 'xlsx') {
-      onProgress(40, 'Compiling sheet tables...');
-      md = await TokenOptimizerConverter.convertExcel(arrayBuffer);
-    } else if (ext === 'csv') {
-      onProgress(40, 'Converting CSV table...');
-      md = await TokenOptimizerConverter.convertExcel(arrayBuffer);
-    } else if (ext === 'md') {
-      onProgress(40, 'Running layout optimization pass...');
-      md = await TokenOptimizerConverter.convertMD(arrayBuffer);
-    } else {
-      return file;
-    }
+      }
+    });
 
     onProgress(85, 'Optimizing formatting...');
 
@@ -286,6 +277,11 @@ ${operation}
     return optimizedFiles;
   }
 
+  // Extensions inject.js should intercept, so disabled types never trigger the prompt
+  function enabledTargets(settings) {
+    return TARGET_EXTENSIONS.filter(ext => isTargetFile('f.' + ext, settings));
+  }
+
   /**
    * Respond to settings requests from inject.js (MAIN world)
    */
@@ -294,7 +290,19 @@ ${operation}
     window.dispatchEvent(new CustomEvent('ato-response-settings', {
       detail: {
         confirmBeforeConvert: data.confirmBeforeConvert !== false,
-        autoConvertChoice: data.autoConvertChoice !== false
+        autoConvertChoice: data.autoConvertChoice !== false,
+        targets: enabledTargets(data)
+      }
+    }));
+  });
+
+  // Push once on load too: inject.js may have asked before this listener existed
+  getStorageData().then((data) => {
+    window.dispatchEvent(new CustomEvent('ato-response-settings', {
+      detail: {
+        confirmBeforeConvert: data.confirmBeforeConvert !== false,
+        autoConvertChoice: data.autoConvertChoice !== false,
+        targets: enabledTargets(data)
       }
     }));
   });
@@ -318,12 +326,13 @@ ${operation}
   if (_ctxAlive() && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener((changes, area) => {
       if (area !== 'local') return;
-      if (changes.confirmBeforeConvert || changes.autoConvertChoice) {
+      if (changes.confirmBeforeConvert || changes.autoConvertChoice || changes.extensions) {
         getStorageData().then((data) => {
           window.dispatchEvent(new CustomEvent('ato-response-settings', {
             detail: {
               confirmBeforeConvert: data.confirmBeforeConvert !== false,
-              autoConvertChoice: data.autoConvertChoice !== false
+              autoConvertChoice: data.autoConvertChoice !== false,
+              targets: enabledTargets(data)
             }
           }));
         });

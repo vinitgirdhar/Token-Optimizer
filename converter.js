@@ -42,8 +42,11 @@ const TokenOptimizerConverter = (function () {
    * Helper: Parse HTML string to Markdown (used for mammoth DOCX outputs)
    */
   function htmlToMarkdown(htmlString) {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlString;
+    // DOMParser builds an inert document: no scripts run and no <img onerror> fires,
+    // which matters now that arbitrary user .html files are converted on host pages.
+    const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+    doc.querySelectorAll('script, style, noscript, template, svg, iframe, head').forEach(n => n.remove());
+    const tempDiv = doc.body || doc.createElement('div');
 
     function processNode(node, listType = null, listIndex = 0, inTableCell = false, listDepth = 0) {
       if (node.nodeType === Node.TEXT_NODE) {
@@ -1433,9 +1436,125 @@ const TokenOptimizerConverter = (function () {
    */
   function estimateTokens(text) {
     if (!text) return 0;
-    // Standard LLM rule of thumb: ~4 characters per token
-    // Using 3.9 yields extremely accurate approximation for standard Markdown/CSV text
-    return Math.ceil(text.length / 3.9);
+    // ponytail: BPE approximation, not a real tokenizer (o200k/Claude vocabularies are
+    // 1-4MB each). Bundle one only if users need exact counts.
+    // Modern tokenizers fold a leading space into the next word, group digits in 3s,
+    // give most CJK characters their own token, and merge runs of whitespace — so
+    // counting characters badly over-reports the value of whitespace compaction.
+    let tokens = 0;
+    const re = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]|\p{L}+|\p{N}+|\n+|[ \t]{2,}|[^\s\p{L}\p{N}]+/gu;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      const piece = m[0];
+      if (/^\p{L}/u.test(piece) && piece.length > 1) tokens += Math.ceil(piece.length / 6);
+      else if (/^\p{N}/u.test(piece)) tokens += Math.ceil(piece.length / 3);
+      else if (/^[^\s\p{L}\p{N}]/u.test(piece)) tokens += Math.ceil(piece.length / 2);
+      else tokens += 1;
+    }
+    return tokens;
+  }
+
+  /**
+   * 6. Plain text / logs: strip ANSI colour codes and fold consecutive duplicate
+   * lines ("retrying..." x400) into one line with a repeat count.
+   */
+  function convertTextToMarkdown(arrayBuffer) {
+    const text = arrayBufferToString(arrayBuffer)
+      .replace(/\r\n/g, '\n')
+      // eslint-disable-next-line no-control-regex
+      .replace(/\x1b\[[0-9;]*[A-Za-z]/g, '');
+    const out = [];
+    let prev = null;
+    let count = 0;
+    const flush = () => { if (prev !== null) out.push(count > 1 ? `${prev} [x${count}]` : prev); };
+    for (const line of text.split('\n')) {
+      if (line === prev && line.trim()) { count++; continue; }
+      flush();
+      prev = line;
+      count = 1;
+    }
+    flush();
+    return Promise.resolve(out.join('\n'));
+  }
+
+  /**
+   * 7. JSON: minify (indentation is pure token overhead for an LLM).
+   * Invalid JSON (e.g. JSON Lines) falls back to the plain-text pass.
+   */
+  function convertJSONToMarkdown(arrayBuffer) {
+    const text = arrayBufferToString(arrayBuffer);
+    try {
+      return Promise.resolve('```json\n' + JSON.stringify(JSON.parse(text)) + '\n```');
+    } catch (_) {
+      return convertTextToMarkdown(arrayBuffer);
+    }
+  }
+
+  /**
+   * 8. HTML: reuse the DOCX HTML→Markdown walker (drops scripts/styles/markup).
+   */
+  function convertHTMLToMarkdown(arrayBuffer) {
+    return Promise.resolve(htmlToMarkdown(arrayBufferToString(arrayBuffer)).trim());
+  }
+
+  // Extension → converter. Single source of truth for content.js and the popup.
+  const DOC_CONVERTERS = {
+    pdf: (buf, o) => convertPDFToMarkdown(buf, o.onProgress, { ocrEnabled: o.ocrEnabled }),
+    docx: (buf) => convertDOCXToMarkdown(buf),
+    pptx: (buf, o) => convertPPTXToMarkdown(buf, o.onProgress),
+    xlsx: (buf) => convertExcelToMarkdown(buf),
+    csv: (buf) => convertExcelToMarkdown(buf),
+    md: (buf) => convertMDToMarkdown(buf),
+    json: (buf) => convertJSONToMarkdown(buf),
+    html: (buf) => convertHTMLToMarkdown(buf),
+    htm: (buf) => convertHTMLToMarkdown(buf),
+    txt: (buf) => convertTextToMarkdown(buf),
+    log: (buf) => convertTextToMarkdown(buf)
+  };
+  const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp'];
+
+  // Settings toggle that controls an extension (several extensions share one toggle).
+  function settingKey(ext) {
+    if (IMAGE_EXTENSIONS.includes(ext)) return 'images';
+    if (['json', 'html', 'htm', 'txt', 'log'].includes(ext)) return 'text';
+    return ext;
+  }
+
+  function convertFile(arrayBuffer, ext, options = {}) {
+    const fn = DOC_CONVERTERS[ext];
+    if (!fn) return Promise.reject(new Error(`Unsupported file type: .${ext}`));
+    return fn(arrayBuffer, options);
+  }
+
+  // Claude bills images at ~(w*h)/750 tokens and downsizes anything over ~1.15MP
+  // server-side anyway; GPT and Gemini tile at similar resolutions. Sending a
+  // pre-scaled image saves upload time and tokens with no visible quality loss.
+  const IMAGE_MAX_EDGE = 1568;
+
+  function estimateImageTokens(width, height) {
+    return Math.ceil((width * height) / 750);
+  }
+
+  /**
+   * Downscale an image so its long edge is at most IMAGE_MAX_EDGE.
+   * Returns null when the image is already small enough (upload original).
+   */
+  async function optimizeImage(blob, type) {
+    const bitmap = await createImageBitmap(blob);
+    const { width, height } = bitmap;
+    const scale = IMAGE_MAX_EDGE / Math.max(width, height);
+    if (scale >= 1) { bitmap.close(); return null; }
+    const w = Math.round(width * scale);
+    const h = Math.round(height * scale);
+    const canvas = new OffscreenCanvas(w, h);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, w, h);
+    bitmap.close();
+    const outBlob = await canvas.convertToBlob(type === 'image/png' ? { type } : { type, quality: 0.9 });
+    return {
+      blob: outBlob,
+      tokensBefore: estimateImageTokens(width, height),
+      tokensAfter: estimateImageTokens(w, h)
+    };
   }
 
   /**
@@ -1536,6 +1655,11 @@ const TokenOptimizerConverter = (function () {
     convertExcel: convertExcelToMarkdown,
     convertMD: convertMDToMarkdown,
     convertPPTX: convertPPTXToMarkdown,
+    convertFile: convertFile,
+    optimizeImage: optimizeImage,
+    settingKey: settingKey,
+    DOC_EXTENSIONS: Object.keys(DOC_CONVERTERS),
+    IMAGE_EXTENSIONS: IMAGE_EXTENSIONS,
     optimize: optimizeMarkdown,
     estimateTokens: estimateTokens,
     formatBytes: formatBytes,

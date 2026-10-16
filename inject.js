@@ -5,7 +5,8 @@
 (function () {
   'use strict';
 
-  const TARGET_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md'];
+  // Replaced by the enabled list from content.js once settings arrive
+  let TARGET_EXTENSIONS = ['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md', 'json', 'html', 'htm', 'txt', 'log', 'png', 'jpg', 'jpeg', 'webp'];
   const _pendingTransactions = new Map();
 
   // Cached preferences from content script (isolated world) via storage
@@ -18,6 +19,7 @@
     if (event.detail) {
       _confirmBeforeConvert = event.detail.confirmBeforeConvert !== false;
       _autoConvertChoice = event.detail.autoConvertChoice !== false;
+      if (Array.isArray(event.detail.targets)) TARGET_EXTENSIONS = event.detail.targets;
     }
   });
 
@@ -51,11 +53,6 @@
       const overlay = document.createElement('div');
       overlay.className = 'ato-confirm-overlay';
 
-      const fileListHtml = fileNames.map(name => {
-        const ext = name.split('.').pop().toUpperCase();
-        return `<div class="ato-confirm-file"><span class="ato-confirm-ext">${ext}</span><span class="ato-confirm-fname">${name}</span></div>`;
-      }).join('');
-
       overlay.innerHTML = `
         <div class="ato-confirm-popup">
           <div class="ato-confirm-header">
@@ -67,21 +64,36 @@
                 <line x1="9" y1="15" x2="15" y2="15"></line>
               </svg>
             </div>
-            <h3 class="ato-confirm-title">Convert to Markdown?</h3>
-            <p class="ato-confirm-subtitle">AI Token Optimizer detected convertible files</p>
+            <h3 class="ato-confirm-title">Optimize for AI?</h3>
+            <p class="ato-confirm-subtitle">AI Token Optimizer detected files it can shrink</p>
           </div>
-          <div class="ato-confirm-files">${fileListHtml}</div>
-          <div class="ato-confirm-desc">Converting to Markdown reduces token usage by up to 70%, saving costs and context window space.</div>
+          <div class="ato-confirm-files"></div>
+          <div class="ato-confirm-desc">Documents become compact Markdown and large images are downscaled, cutting token usage and saving context window space.</div>
           <label class="ato-confirm-remember">
             <input type="checkbox" class="ato-confirm-remember-cb">
             <span>Remember my choice</span>
           </label>
           <div class="ato-confirm-actions">
             <button class="ato-confirm-btn ato-confirm-btn-skip">Upload Original</button>
-            <button class="ato-confirm-btn ato-confirm-btn-convert">Convert to MD</button>
+            <button class="ato-confirm-btn ato-confirm-btn-convert">Optimize</button>
           </div>
         </div>
       `;
+
+      // File names are untrusted: build rows with textContent, never innerHTML
+      const filesEl = overlay.querySelector('.ato-confirm-files');
+      fileNames.forEach(name => {
+        const row = document.createElement('div');
+        row.className = 'ato-confirm-file';
+        const extEl = document.createElement('span');
+        extEl.className = 'ato-confirm-ext';
+        extEl.textContent = name.split('.').pop().toUpperCase();
+        const nameEl = document.createElement('span');
+        nameEl.className = 'ato-confirm-fname';
+        nameEl.textContent = name;
+        row.append(extEl, nameEl);
+        filesEl.appendChild(row);
+      });
 
       document.body.appendChild(overlay);
 

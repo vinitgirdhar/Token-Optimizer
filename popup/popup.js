@@ -32,6 +32,8 @@ document.addEventListener('DOMContentLoaded', async function () {
   const toggleXlsx = document.getElementById('setting-xlsx');
   const toggleCsv = document.getElementById('setting-csv');
   const togglePptx = document.getElementById('setting-pptx');
+  const toggleText = document.getElementById('setting-text');
+  const toggleImages = document.getElementById('setting-images');
   const toggleConfirm = document.getElementById('setting-confirm');
   const toggleOcr = document.getElementById('setting-ocr');
   const toggleDarkMode = document.getElementById('setting-darkmode');
@@ -86,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async function () {
      Storage & Settings Layer
      ========================================== */
   const defaultSettings = {
-    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
+    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
     confirmBeforeConvert: true,
     autoConvertChoice: true,
@@ -143,6 +145,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     toggleXlsx.checked = items.extensions.xlsx;
     toggleCsv.checked = items.extensions.csv;
     togglePptx.checked = items.extensions.pptx;
+    // Keys added in 1.2 are missing from older stored settings: default on
+    toggleText.checked = items.extensions.text !== false;
+    toggleImages.checked = items.extensions.images !== false;
     toggleConfirm.checked = items.confirmBeforeConvert !== false;
     toggleOcr.checked = items.ocrEnabled;
     toggleDarkMode.checked = items.darkModeEnabled || false;
@@ -176,7 +181,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         docx: toggleDocx.checked,
         xlsx: toggleXlsx.checked,
         csv: toggleCsv.checked,
-        pptx: togglePptx.checked
+        pptx: togglePptx.checked,
+        text: toggleText.checked,
+        images: toggleImages.checked
       },
       ocrEnabled: toggleOcr.checked,
       confirmBeforeConvert: toggleConfirm.checked,
@@ -207,7 +214,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Trigger Save on any change
-  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleConfirm, toggleOcr, toggleDarkMode].forEach(el => {
+  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleText, toggleImages, toggleConfirm, toggleOcr, toggleDarkMode].forEach(el => {
     el.addEventListener('change', saveSettings);
   });
   templateInput.addEventListener('input', saveSettings);
@@ -342,8 +349,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     const name = file.name;
     const ext = name.split('.').pop().toLowerCase();
     
-    if (!['pdf', 'docx', 'pptx', 'xlsx', 'csv', 'md'].includes(ext)) {
-      showPlayError(`Unsupported type ".${ext}". Use PDF, DOCX, PPTX, XLSX, CSV, or MD.`);
+    if (!TokenOptimizerConverter.DOC_EXTENSIONS.includes(ext)) {
+      showPlayError(`Unsupported type ".${ext}". Use ${TokenOptimizerConverter.DOC_EXTENSIONS.join(', ').toUpperCase()}.`);
       return;
     }
 
@@ -355,27 +362,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     try {
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      let md = '';
 
       playLoaderText.textContent = 'Extracting elements...';
 
       // Parse file
-      if (ext === 'pdf') {
-        md = await TokenOptimizerConverter.convertPDF(arrayBuffer, (curr, tot) => {
+      const md = await TokenOptimizerConverter.convertFile(arrayBuffer, ext, {
+        onProgress: (curr, tot) => {
           playLoaderText.textContent = `Extracting page ${curr} of ${tot}...`;
-        });
-      } else if (ext === 'docx') {
-        md = await TokenOptimizerConverter.convertDOCX(arrayBuffer);
-      } else if (ext === 'pptx') {
-        md = await TokenOptimizerConverter.convertPPTX(arrayBuffer, (curr, tot) => {
-          playLoaderText.textContent = `Extracting slide ${curr} of ${tot}...`;
-        });
-      } else if (ext === 'xlsx' || ext === 'csv') {
-        md = await TokenOptimizerConverter.convertExcel(arrayBuffer);
-      } else if (ext === 'md') {
-        playLoaderText.textContent = 'Running layout optimization pass...';
-        md = await TokenOptimizerConverter.convertMD(arrayBuffer);
-      }
+        }
+      });
 
       playLoaderText.textContent = 'Optimizing layout...';
       

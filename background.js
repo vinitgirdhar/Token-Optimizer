@@ -7,7 +7,7 @@ chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason !== 'install') return;
 
   chrome.storage.local.set({
-    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true },
+    extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
     confirmBeforeConvert: true,
     autoConvertChoice: true,

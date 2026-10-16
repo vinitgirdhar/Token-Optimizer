@@ -103,8 +103,8 @@
             <div class="dropzone-content">
               <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path><path d="M12 12v9"></path><path d="m8 16 4-4 4 4"></path></svg>
               <h3>Drag & Drop File Here</h3>
-              <p>Supports .pdf, .docx, .pptx, .xlsx, .csv, .md</p>
-              <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.pptx,.xlsx,.csv,.md">
+              <p>Supports .pdf, .docx, .pptx, .xlsx, .csv, .md, .json, .html, .txt, .log</p>
+              <input type="file" id="play-file-input" style="display: none;" accept=".pdf,.docx,.pptx,.xlsx,.csv,.md,.json,.html,.htm,.txt,.log">
               <button class="btn secondary" id="play-select-btn">Select File</button>
               <p id="play-error-msg" class="play-error-msg" style="display: none;"></p>
             </div>
@@ -199,6 +199,28 @@
               </div>
               <label class="switch">
                 <input type="checkbox" id="setting-pptx" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Text, JSON &amp; HTML (.txt / .log / .json / .html)</h4>
+                <p>Minified JSON, stripped markup, folded repeated log lines</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-text" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Images (.png / .jpg / .webp)</h4>
+                <p>Downscale to 1568px long edge, the most vision models actually use</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-images" checked>
                 <span class="slider"></span>
               </label>
             </div>

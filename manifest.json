@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI Token Optimizer",
-  "version": "1.1.0",
-  "description": "Converts PDF, DOCX, PPTX, XLSX, and CSV uploads to optimized Markdown locally — reducing AI token usage by up to 70%. Two-column PDF support, OCR for scanned documents. 100% private, no data leaves your browser.",
+  "version": "1.2.0",
+  "description": "Shrinks AI chat uploads locally: docs to compact Markdown, large images downscaled. Fewer tokens, 100% private.",
   "permissions": [
     "storage"
   ],
@@ -28,7 +28,13 @@
         "https://chatgpt.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://*.perplexity.ai/*"
+        "https://*.perplexity.ai/*",
+        "https://grok.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.mistral.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://aistudio.google.com/*",
+        "https://poe.com/*"
       ],
       "css": ["styles.css"],
       "js": [
@@ -47,7 +53,13 @@
         "https://chatgpt.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://*.perplexity.ai/*"
+        "https://*.perplexity.ai/*",
+        "https://grok.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.mistral.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://aistudio.google.com/*",
+        "https://poe.com/*"
       ],
       "js": [
         "inject.js"
@@ -69,7 +81,13 @@
         "https://chatgpt.com/*",
         "https://claude.ai/*",
         "https://gemini.google.com/*",
-        "https://*.perplexity.ai/*"
+        "https://*.perplexity.ai/*",
+        "https://grok.com/*",
+        "https://chat.deepseek.com/*",
+        "https://chat.mistral.ai/*",
+        "https://copilot.microsoft.com/*",
+        "https://aistudio.google.com/*",
+        "https://poe.com/*"
       ]
     }
   ]
