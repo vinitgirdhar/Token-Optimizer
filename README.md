@@ -6,6 +6,7 @@
 100% Private. 0% Data Leaks.
 
 ![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
+![Firefox 128+](https://img.shields.io/badge/Firefox-128%2B%20(beta)-FF7139?logo=firefoxbrowser&logoColor=white)
 ![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Local-success)
@@ -15,7 +16,7 @@
 
 ---
 
-**AI Token Optimizer** is an offline-capable Google Chrome extension that intercepts file uploads (`.pdf`, `.docx`, `.pptx`, `.xlsx`, `.csv`, `.md`, `.json`, `.html`, `.txt`, `.log`, and images) on popular AI chat platforms — **Claude.ai, ChatGPT, Gemini, Perplexity**, plus Grok, DeepSeek, Mistral, Copilot, AI Studio and Poe in beta — converts documents locally into optimized Markdown, downscales oversized images, and uploads the lean version instead.
+**AI Token Optimizer** is an offline-capable Chrome (and beta Firefox) extension that intercepts file uploads and large pastes (`.pdf`, `.docx`, `.pptx`, `.xlsx`, `.csv`, `.md`, `.json`, `.html`, `.txt`, `.log`, and images) on popular AI chat platforms — **Claude.ai, ChatGPT, Gemini, Perplexity**, plus Grok, DeepSeek, Mistral, Copilot, AI Studio and Poe in beta — converts documents locally into optimized Markdown, downscales oversized images, compacts pasted JSON and logs, and sends the lean version instead.
 
 The result: massive context-window savings, lower API costs, faster AI reasoning, and no more platform-specific file size or file type friction.
 
@@ -49,15 +50,21 @@ Raw documents are extremely token-inefficient. A `.docx` or `.pdf` file carries 
 | Bloated tokens from formatting noise | **Up to 70% fewer tokens** |
 | Slower responses on large documents | Faster reasoning over compact input |
 | File type & size limits get in the way | Markdown sails through every platform |
+| Full-resolution screenshots billed by pixel count | Images downscaled to what vision models actually use |
+| Pasted pretty-printed JSON and noisy logs | Minified JSON, repeated log lines folded |
 | Files uploaded to third-party servers for parsing | **Everything parsed locally in your browser** |
 
 ---
 
 ## ✨ Features
 
-- 🔒 **100% Local & Private** — All document parsing (PDF, Word, Excel, CSV) happens entirely inside your browser sandbox. No file data ever leaves your device.
+- 🔒 **100% Local & Private** — All parsing (documents, images, pastes) happens entirely inside your browser sandbox. No file data ever leaves your device.
 - 📉 **Up to 70% Token Savings** — Smart compaction removes redundant whitespace, empty cells, duplicated slide content, and bloated document structure.
 - ⚡ **Seamless Interception** — Automatically catches `<input type="file">` change events and drag-and-drop triggers on supported chat platforms using capture-phase event hooking. Zero extra clicks.
+- 🖼️ **Image Downscaling** — PNG/JPG/WebP uploads are resized to a 1568px long edge (configurable) before upload. Vision tokens scale with pixel count, so a 12MP screenshot drops from ~16K to ~2.5K estimated tokens.
+- 📋 **Paste Compaction** — Pastes over 1,500 characters get JSON minified, ANSI colour codes stripped and repeated lines folded, but only when that saves 15%+. Code indentation is never touched, and Ctrl+Z undoes it.
+- 📏 **Context-Window Fit** — After each conversion the on-page HUD shows the estimated token count and how much of the site's context window it uses (e.g. *"≈24,310 tokens · 12% of 200K window"*).
+- 🎛️ **Output Tuning** — Choose Markdown or CSV for spreadsheet tables, pick the image size limit, and turn paste compaction on or off.
 - 🔍 **OCR for Scanned Documents** — Built-in Tesseract.js OCR (bundled locally) extracts text from scanned/image-based PDF pages.
 - 📰 **Two-Column PDF Support** — Structural coordinate extraction correctly reconstructs multi-column academic papers and reports.
 - 🧪 **Popup Playground** — Open the extension dashboard, drag in any document, and instantly view the structured Markdown preview, copy it to your clipboard, or tweak options.
@@ -72,13 +79,14 @@ Raw documents are extremely token-inefficient. A `.docx` or `.pdf` file carries 
 | :--- | :--- | :--- | :--- |
 | **PDF** (`.pdf`) | `PDF.js` with structural coordinate extraction + `Tesseract.js` OCR fallback | Structured `.md` | Column reconstruction, list formatting, sub/superscript mapping, slide-deck deduplication |
 | **Word** (`.docx`) | `Mammoth.js` HTML tag compilation | Semantic `.md` | Semantic headers, bold, italics, tables, and list extraction |
-| **Excel** (`.xlsx` / `.xls`) | `SheetJS` workbook cell mapper | Table `.md` | Token-efficient clean table rows (blanks and unused cells stripped) |
-| **CSV** (`.csv`) | Native text decoder with SheetJS parsing | Table `.md` | Layout-compressed tables |
+| **PowerPoint** (`.pptx`) | `JSZip` + `DOMParser` over slide XML | Structured `.md` | Slide titles, bullets, tables and speaker notes |
+| **Excel** (`.xlsx`) | `SheetJS` workbook cell mapper | Table `.md` (or CSV) | Blank rows/columns stripped; optional CSV output skips per-cell pipe padding |
+| **CSV** (`.csv`) | SheetJS parsing | Table `.md` (or CSV) | Layout-compressed tables |
 | **Markdown** (`.md`) | Native text pass-through | Optimized `.md` | Whitespace compaction, multi-newline trimming |
 | **JSON** (`.json`) | Native `JSON.parse` | Fenced `.md` | Minified (indentation is pure token overhead); JSON Lines falls back to the text pass |
 | **HTML** (`.html` / `.htm`) | Inert `DOMParser` + the DOCX Markdown walker | Semantic `.md` | Scripts, styles, SVG and markup stripped |
 | **Text / Logs** (`.txt` / `.log`) | Native text decoder | `.md` | ANSI colour codes stripped, consecutive duplicate lines folded (`line [x400]`) |
-| **Images** (`.png` / `.jpg` / `.webp`) | `OffscreenCanvas` | Same format | Downscaled to a 1568px long edge — the resolution vision models actually use; billed tokens scale with pixel count |
+| **Images** (`.png` / `.jpg` / `.webp`) | `OffscreenCanvas` | Same format | Downscaled to a 1568px long edge by default (1024 / 2048 selectable); billed tokens scale with pixel count |
 
 ## 🌐 Supported Platforms
 
@@ -117,6 +125,14 @@ cd Token-Optimizer
 4. Select the cloned `Token-Optimizer` folder
 5. Pin **AI Token Optimizer** from your extensions bar for easy access ✅
 
+### Firefox (beta, 128+)
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on…** and select `manifest.json` in the cloned folder
+3. Temporary add-ons are removed when Firefox restarts; reload it the same way
+
+> Firefox support is new and not yet verified end-to-end. Please [report issues](https://github.com/vinitgirdhar/Token-Optimizer/issues).
+
 ### Updating
 
 To get the latest version, pull the newest changes and reload:
@@ -133,9 +149,14 @@ Then click the **↻ Reload** button on the extension card in `chrome://extensio
 
 ### Automatic Mode (Zero Effort)
 
-1. Visit any supported AI platform (Claude.ai, ChatGPT, Gemini, Perplexity).
-2. Upload or drag-and-drop a supported document exactly as you normally would.
-3. The extension intercepts the upload, converts the file to optimized Markdown locally, and attaches the Markdown version instead — automatically.
+1. Visit any [supported AI platform](#-supported-platforms).
+2. Upload or drag-and-drop a supported document or image exactly as you normally would.
+3. Choose **Optimize** in the confirmation popup (or tick *Remember my choice* to skip it next time).
+4. The extension converts the file locally and attaches the optimized version instead. The HUD shows tokens saved and how much of the context window the file uses.
+
+### Paste Compaction
+
+Paste a large JSON blob or log into the chat box. If compaction saves 15% or more, the compact version is inserted and a short notice confirms it. Press **Ctrl+Z** to restore the original, or turn it off under **Settings → Output Tuning**.
 
 ### Playground Mode (Manual Preview)
 
@@ -163,7 +184,18 @@ The core engine (`converter.js`) leverages high-performance, sandboxed browser A
 
 1. **PDF Parse** — Reconstructs paragraphs, matches font baselines to capture mathematical sub/superscripts, filters out visual-only components (images, diagram labels), reconstructs multi-column layouts, and falls back to local OCR for scanned pages.
 2. **Word Parse** — Compiles Mammoth's HTML output into lightweight semantic Markdown.
-3. **Excel/CSV Parse** — Cleans spreadsheet tables, drops completely empty rows/columns, formats dates, and generates standard pipe-separated GFM tables.
+3. **Excel/CSV Parse** — Cleans spreadsheet tables, drops completely empty rows/columns, formats dates, and generates GFM pipe tables or fenced CSV.
+4. **PowerPoint Parse** — Unzips the deck and reads slide XML for titles, bullets, tables and speaker notes.
+5. **JSON / HTML / Text** — Minifies JSON, converts HTML through an inert `DOMParser` (no scripts run), and folds duplicate log lines.
+6. **Images** — Decodes with `createImageBitmap`, resizes on an `OffscreenCanvas`, and re-encodes in the original format.
+
+### Paste Interception
+
+`content.js` listens for `paste` in the capture phase. For large text it computes a lossless compaction, cancels the original paste and dispatches a new one carrying the compact text. Rich editors such as ProseMirror (Claude, ChatGPT) handle it natively. Plain textareas fall back to `insertText`, which keeps native undo working.
+
+### Token Estimation
+
+Savings are estimated with a tokenizer-shaped heuristic (words, 3-digit number groups, CJK characters, merged whitespace) rather than a raw character count, so whitespace removal isn't over-reported. It is an estimate, not an exact count for any one model.
 
 ---
 
@@ -178,6 +210,7 @@ Token-Optimizer/
 ├── converter.js         # Core engine — document → optimized Markdown
 ├── styles.css           # Injected on-page UI styles
 ├── popup/               # Extension dashboard (playground, stats, settings)
+├── tests/               # Unit tests: node --test tests/converter.test.js
 └── lib/                 # Bundled third-party libraries (PDF.js, Mammoth,
                          # SheetJS, JSZip, Tesseract.js — no remote loading)
 ```
@@ -191,7 +224,7 @@ We believe your data is yours alone. **AI Token Optimizer** requires no internet
 - 🟢 **No telemetry or analytics tracking**
 - 🟢 **No remote script loading** — all libraries (including OCR models) are fully bundled locally
 - 🟢 **No file logging or third-party cookies**
-- 🟢 **Minimal permissions** — only `storage` (for your settings and savings stats) and content-script access to the four supported chat domains
+- 🟢 **Minimal permissions** — only `storage` (for your settings and savings stats) and content-script access to the [supported chat domains](#-supported-platforms)
 
 You can verify every claim above yourself — the entire source code is in this repository, unminified where authored by this project, with no build step.
 
@@ -204,6 +237,9 @@ You can verify every claim above yourself — the entire source code is in this 
 | Uploads aren't being intercepted | Refresh the AI platform tab after installing/reloading the extension (content scripts inject at page load). |
 | Changes to the code aren't taking effect | Click **↻ Reload** on the extension card in `chrome://extensions/`, then refresh the platform tab. |
 | A specific document parses incorrectly | Open the popup playground, drag the file in, and inspect the preview. Please [open an issue](https://github.com/vinitgirdhar/Token-Optimizer/issues) with a sanitized sample file. |
+| A paste wasn't compacted | Only pastes over 1,500 characters that shrink by 15%+ are changed. Check **Settings → Output Tuning → Compact Large Pastes**. |
+| I want the original paste back | Press **Ctrl+Z** right after pasting. |
+| An image wasn't resized | Images already within the size limit are uploaded unchanged. GIFs are never modified. |
 | Scanned PDF returns little/no text | OCR runs locally and can take longer on large scans — give it a moment. Very low-resolution scans may extract poorly. |
 
 ---
