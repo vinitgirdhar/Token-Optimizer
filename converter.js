@@ -819,7 +819,7 @@ const TokenOptimizerConverter = (function () {
   /**
    * 3. Excel/CSV to Markdown Table
    */
-  async function convertExcelToMarkdown(arrayBuffer) {
+  async function convertExcelToMarkdown(arrayBuffer, options = {}) {
     if (typeof XLSX === 'undefined') {
       throw new Error('SheetJS (XLSX) library is not loaded.');
     }
@@ -921,6 +921,14 @@ const TokenOptimizerConverter = (function () {
       }
 
       markdown += `\n\n### Sheet: ${sheetName}\n\n`;
+
+      // CSV skips the per-cell "| " padding and separator row: fewer tokens on big sheets
+      if (options.tableFormat === 'csv') {
+        const csvCell = (v) => /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+        const lines = activeRows.map(r => activeCols.map(c => csvCell(rows[r][c])).join(','));
+        markdown += '```csv\n' + lines.join('\n') + '\n```\n';
+        return;
+      }
 
       // Generate table headers (the first non-empty/active row)
       const firstRowIdx = activeRows[0];
@@ -1459,7 +1467,11 @@ const TokenOptimizerConverter = (function () {
    * lines ("retrying..." x400) into one line with a repeat count.
    */
   function convertTextToMarkdown(arrayBuffer) {
-    const text = arrayBufferToString(arrayBuffer)
+    return Promise.resolve(compactText(arrayBufferToString(arrayBuffer)));
+  }
+
+  function compactText(input) {
+    const text = input
       .replace(/\r\n/g, '\n')
       // eslint-disable-next-line no-control-regex
       .replace(/\x1b\[[0-9;]*[A-Za-z]/g, '');
@@ -1474,7 +1486,40 @@ const TokenOptimizerConverter = (function () {
       count = 1;
     }
     flush();
-    return Promise.resolve(out.join('\n'));
+    return out.join('\n');
+  }
+
+  /**
+   * Pasted text: only lossless-for-meaning passes. Unlike optimize() this never
+   * touches inner whitespace, HTML or comments — pastes are often code.
+   * Returns null when the saving isn't worth surprising the user.
+   */
+  function optimizePaste(text, minSavingRatio = 0.15) {
+    let out;
+    try {
+      const parsed = JSON.parse(text);
+      out = typeof parsed === 'object' && parsed !== null ? JSON.stringify(parsed) : null;
+    } catch (_) { out = null; }
+    if (out === null) {
+      out = compactText(text)
+        .split('\n').map(l => l.trimEnd()).join('\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/^\n+|\s+$/g, ''); // keep first-line indentation (code)
+    }
+    const before = estimateTokens(text);
+    const after = estimateTokens(out);
+    if (before === 0 || (before - after) / before < minSavingRatio) return null;
+    return { text: out, tokensBefore: before, tokensAfter: after };
+  }
+
+  // ponytail: rough per-site context windows; real limits vary by plan and model.
+  const CONTEXT_WINDOWS = {
+    'claude.ai': 200000,
+    'gemini.google.com': 1000000,
+    'aistudio.google.com': 1000000
+  };
+  function contextWindowFor(hostname) {
+    return CONTEXT_WINDOWS[hostname] || 128000;
   }
 
   /**
@@ -1502,8 +1547,8 @@ const TokenOptimizerConverter = (function () {
     pdf: (buf, o) => convertPDFToMarkdown(buf, o.onProgress, { ocrEnabled: o.ocrEnabled }),
     docx: (buf) => convertDOCXToMarkdown(buf),
     pptx: (buf, o) => convertPPTXToMarkdown(buf, o.onProgress),
-    xlsx: (buf) => convertExcelToMarkdown(buf),
-    csv: (buf) => convertExcelToMarkdown(buf),
+    xlsx: (buf, o) => convertExcelToMarkdown(buf, o),
+    csv: (buf, o) => convertExcelToMarkdown(buf, o),
     md: (buf) => convertMDToMarkdown(buf),
     json: (buf) => convertJSONToMarkdown(buf),
     html: (buf) => convertHTMLToMarkdown(buf),
@@ -1529,20 +1574,20 @@ const TokenOptimizerConverter = (function () {
   // Claude bills images at ~(w*h)/750 tokens and downsizes anything over ~1.15MP
   // server-side anyway; GPT and Gemini tile at similar resolutions. Sending a
   // pre-scaled image saves upload time and tokens with no visible quality loss.
-  const IMAGE_MAX_EDGE = 1568;
+  const IMAGE_MAX_EDGE = 1568; // default; user-configurable
 
   function estimateImageTokens(width, height) {
     return Math.ceil((width * height) / 750);
   }
 
   /**
-   * Downscale an image so its long edge is at most IMAGE_MAX_EDGE.
+   * Downscale an image so its long edge is at most maxEdge.
    * Returns null when the image is already small enough (upload original).
    */
-  async function optimizeImage(blob, type) {
+  async function optimizeImage(blob, type, maxEdge = IMAGE_MAX_EDGE) {
     const bitmap = await createImageBitmap(blob);
     const { width, height } = bitmap;
-    const scale = IMAGE_MAX_EDGE / Math.max(width, height);
+    const scale = maxEdge / Math.max(width, height);
     if (scale >= 1) { bitmap.close(); return null; }
     const w = Math.round(width * scale);
     const h = Math.round(height * scale);
@@ -1657,6 +1702,8 @@ const TokenOptimizerConverter = (function () {
     convertPPTX: convertPPTXToMarkdown,
     convertFile: convertFile,
     optimizeImage: optimizeImage,
+    optimizePaste: optimizePaste,
+    contextWindowFor: contextWindowFor,
     settingKey: settingKey,
     DOC_EXTENSIONS: Object.keys(DOC_CONVERTERS),
     IMAGE_EXTENSIONS: IMAGE_EXTENSIONS,

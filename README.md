@@ -6,7 +6,7 @@
 100% Private. 0% Data Leaks.
 
 ![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-4285F4?logo=googlechrome&logoColor=white)
-![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 ![Privacy First](https://img.shields.io/badge/Privacy-100%25%20Local-success)
 ![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)
@@ -237,16 +237,16 @@ AI usage has shifted: models take images natively, context windows are 200K–1M
 - [x] Disabled file types no longer trigger the confirm prompt
 - [x] Unit tests: `node --test tests/converter.test.js`
 
-**Phase 2 — Smarter compression**
-- [ ] Paste interception: optimize large pasted text (logs, JSON, code) the same way as uploads
-- [ ] CSV/TSV output option for big tables (pipe-table padding costs tokens on every cell)
-- [ ] Context-window fit indicator (e.g. "uses 12% of a 200K window") in the HUD
-- [ ] Per-format settings (OCR language, image max edge, table format)
+**Phase 2 — Smarter compression (v1.3, shipped)**
+- [x] Paste compaction: pastes over 1,500 chars get JSON minified, ANSI codes stripped and repeated lines folded — only when it saves 15%+, never touching code indentation (Ctrl+Z undoes)
+- [x] CSV output option for spreadsheets (no per-cell pipe padding)
+- [x] Context-window fit in the HUD (e.g. "≈24,310 tokens · 12% of 200K window")
+- [x] Output Tuning settings: paste toggle, table format, image max size (1024 / 1568 / 2048px)
 
 **Phase 3 — Reach**
-- [ ] Chrome Web Store release
-- [ ] Firefox (WebExtensions) port
-- [ ] Optional on-device summarisation via Chrome's built-in AI (Gemini Nano) for documents too large for any context window
+- [x] Firefox 128+ manifest support (`browser_specific_settings`, background `scripts`) — load via `about:debugging` → *Load Temporary Add-on* → `manifest.json`; not yet verified end-to-end
+- [ ] Chrome Web Store / Firefox AMO listings (needs store assets and the owner's developer accounts)
+- [ ] Optional on-device summarisation via Chrome's built-in AI (Gemini Nano) for documents too large for any context window — deferred: lossy, so it needs its own opt-in UX
 
 Have a suggestion? [Open a feature request](https://github.com/vinitgirdhar/Token-Optimizer/issues)!
 

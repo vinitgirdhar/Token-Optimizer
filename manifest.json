@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AI Token Optimizer",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Shrinks AI chat uploads locally: docs to compact Markdown, large images downscaled. Fewer tokens, 100% private.",
   "permissions": [
     "storage"
@@ -20,7 +20,15 @@
     "128": "image.png"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "ai-token-optimizer@vinitgirdhar",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": { "required": ["none"] }
+    }
   },
   "content_scripts": [
     {

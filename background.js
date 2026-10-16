@@ -9,6 +9,9 @@ chrome.runtime.onInstalled.addListener((details) => {
   chrome.storage.local.set({
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
+    tableFormat: 'markdown',
+    imageMaxEdge: 1568,
+    pasteOptimize: true,
     confirmBeforeConvert: true,
     autoConvertChoice: true,
     stats: {

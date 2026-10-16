@@ -6,8 +6,9 @@ const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const ctx = { TextDecoder, console };
+const ctx = { TextDecoder, console, Uint8Array, ArrayBuffer };
 vm.createContext(ctx);
+vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'lib', 'xlsx.full.min.js'), 'utf8'), ctx);
 vm.runInContext(fs.readFileSync(path.join(__dirname, '..', 'converter.js'), 'utf8') + ';this.C = TokenOptimizerConverter;', ctx);
 const C = ctx.C;
 const buf = (s) => new TextEncoder().encode(s).buffer;
@@ -38,4 +39,30 @@ test('settingKey groups extensions under one toggle', () => {
 
 test('unsupported extension rejects', async () => {
   await assert.rejects(C.convertFile(buf(''), 'exe'));
+});
+
+test('spreadsheet CSV output quotes cells and uses fewer tokens than Markdown', async () => {
+  const csv = buf('name,note\nAda,"hi, there"\nBob,plain\n');
+  const asCsv = await C.convertFile(csv, 'csv', { tableFormat: 'csv' });
+  assert.ok(asCsv.includes('```csv\nname,note\nAda,"hi, there"\nBob,plain\n```'), asCsv);
+  const asMd = await C.convertFile(csv, 'csv', {});
+  assert.ok(asMd.includes('| name | note |'));
+  assert.ok(C.estimateTokens(asCsv) < C.estimateTokens(asMd));
+});
+
+test('optimizePaste minifies JSON, keeps code indentation, skips small wins', () => {
+  const json = JSON.stringify({ items: Array.from({ length: 20 }, (_, i) => ({ id: i, ok: true })) }, null, 4);
+  const r = C.optimizePaste(json);
+  assert.strictEqual(r.text, JSON.stringify(JSON.parse(json)));
+  assert.ok(r.tokensAfter < r.tokensBefore);
+  // Scalar JSON and plain prose with nothing to remove are left alone
+  assert.strictEqual(C.optimizePaste('42'), null);
+  assert.strictEqual(C.optimizePaste('def f():\n    return 1'), null);
+  const log = Array(50).fill('    WARN  disk almost full').join('\n');
+  assert.strictEqual(C.optimizePaste(log).text, '    WARN  disk almost full [x50]');
+});
+
+test('contextWindowFor falls back to 128K', () => {
+  assert.strictEqual(C.contextWindowFor('claude.ai'), 200000);
+  assert.strictEqual(C.contextWindowFor('example.com'), 128000);
 });

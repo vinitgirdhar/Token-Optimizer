@@ -704,6 +704,19 @@ input:checked + .slider {
 }
 input:checked + .slider:before { transform: translateX(16px); }
 
+/* Output tuning selects */
+.setting-select {
+  background: var(--bg);
+  border: 1px solid rgba(0, 0, 0, .10);
+  border-radius: var(--r1);
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--t1);
+  padding: 4px 6px;
+  outline: none;
+}
+.setting-select:focus { border-color: var(--theme-blue); }
+
 /* Template textarea */
 .text-area-container { padding: 10px 14px; }
 

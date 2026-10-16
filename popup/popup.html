@@ -243,6 +243,46 @@
             </div>
           </div>
 
+          <!-- Output Tuning -->
+          <div class="settings-group">
+            <h3>Output Tuning</h3>
+            <p class="group-desc">Trade-offs between token savings and fidelity.</p>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Compact Large Pastes</h4>
+                <p>Minify pasted JSON, fold repeated log lines (1,500+ chars)</p>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="setting-paste" checked>
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Spreadsheet Table Format</h4>
+                <p>CSV uses fewer tokens; Markdown renders nicer</p>
+              </div>
+              <select id="setting-table-format" class="setting-select">
+                <option value="markdown">Markdown</option>
+                <option value="csv">CSV</option>
+              </select>
+            </div>
+
+            <div class="toggle-row">
+              <div class="toggle-label">
+                <h4>Image Max Size</h4>
+                <p>Long edge after downscaling</p>
+              </div>
+              <select id="setting-image-edge" class="setting-select">
+                <option value="1024">1024px</option>
+                <option value="1568">1568px</option>
+                <option value="2048">2048px</option>
+              </select>
+            </div>
+          </div>
+
           <!-- OCR Settings -->
           <div class="settings-group">
             <h3>Advanced Features</h3>

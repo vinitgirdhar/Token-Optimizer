@@ -34,6 +34,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   const togglePptx = document.getElementById('setting-pptx');
   const toggleText = document.getElementById('setting-text');
   const toggleImages = document.getElementById('setting-images');
+  const togglePaste = document.getElementById('setting-paste');
+  const selectTableFormat = document.getElementById('setting-table-format');
+  const selectImageEdge = document.getElementById('setting-image-edge');
   const toggleConfirm = document.getElementById('setting-confirm');
   const toggleOcr = document.getElementById('setting-ocr');
   const toggleDarkMode = document.getElementById('setting-darkmode');
@@ -90,6 +93,9 @@ document.addEventListener('DOMContentLoaded', async function () {
   const defaultSettings = {
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
+    tableFormat: 'markdown',
+    imageMaxEdge: 1568,
+    pasteOptimize: true,
     confirmBeforeConvert: true,
     autoConvertChoice: true,
     darkModeEnabled: false,
@@ -104,6 +110,9 @@ document.addEventListener('DOMContentLoaded', async function () {
       const merged = {
         extensions: { ...defaultSettings.extensions, ...items.extensions },
         ocrEnabled: items.ocrEnabled !== undefined ? items.ocrEnabled : defaultSettings.ocrEnabled,
+        tableFormat: items.tableFormat || defaultSettings.tableFormat,
+        imageMaxEdge: items.imageMaxEdge || defaultSettings.imageMaxEdge,
+        pasteOptimize: items.pasteOptimize !== false,
         confirmBeforeConvert: items.confirmBeforeConvert !== undefined ? items.confirmBeforeConvert : defaultSettings.confirmBeforeConvert,
         autoConvertChoice: items.autoConvertChoice !== undefined ? items.autoConvertChoice : defaultSettings.autoConvertChoice,
         darkModeEnabled: items.darkModeEnabled !== undefined ? items.darkModeEnabled : defaultSettings.darkModeEnabled,
@@ -150,6 +159,9 @@ document.addEventListener('DOMContentLoaded', async function () {
     toggleImages.checked = items.extensions.images !== false;
     toggleConfirm.checked = items.confirmBeforeConvert !== false;
     toggleOcr.checked = items.ocrEnabled;
+    togglePaste.checked = items.pasteOptimize !== false;
+    selectTableFormat.value = items.tableFormat || 'markdown';
+    selectImageEdge.value = String(items.imageMaxEdge || 1568);
     toggleDarkMode.checked = items.darkModeEnabled || false;
 
     if (toggleDarkMode.checked) {
@@ -186,6 +198,9 @@ document.addEventListener('DOMContentLoaded', async function () {
         images: toggleImages.checked
       },
       ocrEnabled: toggleOcr.checked,
+      pasteOptimize: togglePaste.checked,
+      tableFormat: selectTableFormat.value,
+      imageMaxEdge: Number(selectImageEdge.value),
       confirmBeforeConvert: toggleConfirm.checked,
       autoConvertChoice: true,
       darkModeEnabled: toggleDarkMode.checked,
@@ -214,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 
   // Trigger Save on any change
-  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleText, toggleImages, toggleConfirm, toggleOcr, toggleDarkMode].forEach(el => {
+  [togglePdf, toggleDocx, toggleXlsx, toggleCsv, togglePptx, toggleText, toggleImages, toggleConfirm, toggleOcr, toggleDarkMode, togglePaste, selectTableFormat, selectImageEdge].forEach(el => {
     el.addEventListener('change', saveSettings);
   });
   templateInput.addEventListener('input', saveSettings);
@@ -367,6 +382,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
       // Parse file
       const md = await TokenOptimizerConverter.convertFile(arrayBuffer, ext, {
+        tableFormat: selectTableFormat.value,
         onProgress: (curr, tot) => {
           playLoaderText.textContent = `Extracting page ${curr} of ${tot}...`;
         }

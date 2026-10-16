@@ -41,6 +41,9 @@
   const _STORAGE_DEFAULTS = {
     extensions: { pdf: true, docx: true, xlsx: true, csv: true, pptx: true, text: true, images: true },
     ocrEnabled: false,
+    tableFormat: 'markdown',
+    imageMaxEdge: 1568,
+    pasteOptimize: true,
     confirmBeforeConvert: true,
     autoConvertChoice: true,
     stats: { totalFilesOptimized: 0, totalOriginalBytes: 0, totalOptimizedBytes: 0, totalTokensSaved: 0 },
@@ -170,6 +173,14 @@
     setTimeout(() => hud.remove(), 400);
   }
 
+  // "≈12,345 tokens · 6% of 200K window" — tells the user whether the file fits
+  function contextFitText(tokens) {
+    const windowSize = TokenOptimizerConverter.contextWindowFor(location.hostname);
+    const pct = Math.max(1, Math.round((tokens / windowSize) * 100));
+    const label = windowSize >= 1000000 ? `${windowSize / 1000000}M` : `${Math.round(windowSize / 1000)}K`;
+    return `≈${tokens.toLocaleString()} tokens · ${pct}% of ${label} window`;
+  }
+
   /**
    * CORE: Process a single file and convert to Markdown
    */
@@ -177,7 +188,7 @@
     const ext = file.name.split('.').pop().toLowerCase();
     if (TokenOptimizerConverter.IMAGE_EXTENSIONS.includes(ext)) {
       onProgress(40, 'Downscaling image...');
-      const result = await TokenOptimizerConverter.optimizeImage(file, file.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`);
+      const result = await TokenOptimizerConverter.optimizeImage(file, file.type || `image/${ext === 'jpg' ? 'jpeg' : ext}`, settings.imageMaxEdge);
       if (!result) {
         onProgress(100, 'Already optimal size', 0, 0);
         return file;
@@ -192,6 +203,7 @@
     onProgress(20, 'Parsing structure...');
     const md = await TokenOptimizerConverter.convertFile(arrayBuffer, ext, {
       ocrEnabled: settings.ocrEnabled || false,
+      tableFormat: settings.tableFormat,
       onProgress: (current, total) => {
         const pct = 20 + Math.round((current / total) * 60);
         onProgress(pct, `Extracting page ${current} of ${total}...`);
@@ -230,7 +242,7 @@ ${operation}
     const tokensSaved = Math.max(0, rawEstTokens - finalEstTokens);
     const savingsPercent = rawEstTokens > 0 ? Math.round((tokensSaved / rawEstTokens) * 100) : 0;
 
-    onProgress(100, 'Conversion complete!', savingsPercent, tokensSaved);
+    onProgress(100, contextFitText(finalEstTokens), savingsPercent, tokensSaved);
 
     // 4. Update Global/Extension Stats
     await updateStatistics(1, originalSize, finalSize, tokensSaved);
@@ -417,5 +429,51 @@ ${operation}
       }));
     }
   });
+
+  /**
+   * Paste interception: large pasted logs/JSON get the same lossless compaction
+   * as uploads. Re-dispatches a paste with the compacted text so rich editors
+   * (ProseMirror on Claude/ChatGPT) handle it natively; plain textareas don't
+   * act on synthetic pastes, so fall back to insertText there.
+   */
+  const PASTE_MIN_CHARS = 1500;
+  let _pasteEnabled = true;
+  getStorageData().then((data) => { _pasteEnabled = data.pasteOptimize !== false; });
+  if (_ctxAlive() && chrome.storage && chrome.storage.onChanged) {
+    chrome.storage.onChanged.addListener((changes, area) => {
+      if (area === 'local' && changes.pasteOptimize) _pasteEnabled = changes.pasteOptimize.newValue !== false;
+    });
+  }
+
+  window.addEventListener('paste', function (event) {
+    if (!_pasteEnabled || _processedEvents.has(event) || !event.clipboardData) return;
+    if (event.clipboardData.files && event.clipboardData.files.length > 0) return;
+    const text = event.clipboardData.getData('text/plain');
+    if (!text || text.length < PASTE_MIN_CHARS) return;
+
+    const result = TokenOptimizerConverter.optimizePaste(text);
+    if (!result) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const dt = new DataTransfer();
+    dt.setData('text/plain', result.text);
+    const synthetic = new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true });
+    _processedEvents.add(synthetic);
+    const target = event.target;
+    target.dispatchEvent(synthetic);
+    if (!synthetic.defaultPrevented) {
+      if (target.focus) target.focus();
+      document.execCommand('insertText', false, result.text);
+    }
+
+    const saved = result.tokensBefore - result.tokensAfter;
+    updateStatistics(1, new Blob([text]).size, new Blob([result.text]).size, saved);
+    const hud = showHUDOverlay(['Pasted text']);
+    updateHUDOverlay(hud, 'Pasted text', 1, 1, 100, 'Compacted (Ctrl+Z to undo)',
+      Math.round((saved / result.tokensBefore) * 100), saved);
+    setTimeout(() => removeHUDOverlay(hud), 2500);
+  }, true);
 
 })();
